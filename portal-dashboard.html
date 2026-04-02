@@ -113,7 +113,16 @@
                 </form>
             </div>
 
-            <h3 style="margin: 24px 0 12px; font-size: 1rem;">Alle feedback</h3>
+            <div style="margin: 24px 0 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                <h3 style="font-size: 1rem; margin: 0;">Feedback</h3>
+                <select id="feedbackFilter" onchange="filterFeedback()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; font-family: var(--font-body);">
+                    <option value="all">Alle tools</option>
+                    <option value="Fill Rate Light NL">Fill Rate Light NL</option>
+                    <option value="Cable Tray Clearance">Cable Tray Clearance Generator</option>
+                    <option value="Cable Tray Support">Cable Tray Support Generator</option>
+                    <option value="Algemeen">Algemeen / Overig</option>
+                </select>
+            </div>
             <div id="feedbackList"><div class="loading">Laden...</div></div>
         </div>
 
@@ -167,7 +176,7 @@
             if (res.status === 401) { logout(); return; }
             const data = await res.json();
             allFeedback = data.feedback || [];
-            renderFeedback(allFeedback, 'feedbackList');
+            filterFeedback();
             if (ROLE === 'tester') renderMyFeedback();
         } catch (e) {
             document.getElementById('feedbackList').innerHTML = '<p style="color:var(--gray-mid);">Kon feedback niet laden.</p>';
@@ -278,6 +287,12 @@
         localStorage.removeItem('portal_name');
         localStorage.removeItem('portal_tag');
         window.location.href = 'portal.html';
+    }
+
+    function filterFeedback() {
+        const filter = document.getElementById('feedbackFilter').value;
+        const filtered = filter === 'all' ? allFeedback : allFeedback.filter(f => f.tool === filter);
+        renderFeedback(filtered, 'feedbackList');
     }
 
     function escapeHtml(text) {

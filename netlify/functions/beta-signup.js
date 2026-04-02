@@ -121,7 +121,7 @@ exports.handler = async (event) => {
   let data;
   try { data = JSON.parse(event.body); } catch { return { statusCode: 400, headers, body: JSON.stringify({ error: 'Ongeldige data.' }) }; }
 
-  const { firstName, lastName, company, email, role, revitVersion } = data;
+  const { firstName, lastName, company, email, role, revitVersion, whatsappOptIn, phone } = data;
   if (!firstName || !lastName || !company || !email) {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Vul alle verplichte velden in.' }) };
   }
@@ -141,16 +141,27 @@ exports.handler = async (event) => {
     const now = new Date();
     const isBetaLive = now >= BETA_START;
 
-    signups.push({ firstName, lastName, company, email, role, revitVersion, code, date: now.toISOString() });
+    signups.push({ firstName, lastName, company, email, role, revitVersion, code, date: now.toISOString(), whatsappOptIn: !!whatsappOptIn, phone: phone || '' });
     await saveSignups(signups);
 
     let emailSent = false;
     try {
-      const token = await getAccessToken();
+      const graphToken = await getAccessToken();
       const subject = isBetaLive ? 'Uw Fill Rate Light NL Beta activatiecode' : 'Aanmelding bevestigd - Fill Rate Light NL Beta';
       const html = isBetaLive ? getBetaLiveEmail(firstName, code) : getPreBetaEmail(firstName, code);
-      await sendEmail(token, email, subject, html);
+      await sendEmail(graphToken, email, subject, html);
       emailSent = true;
+
+      // Admin notificatie bij whatsapp opt-in
+      if (whatsappOptIn && phone) {
+        await sendEmail(graphToken, 'info@bimlynk.com',
+          `Nieuwe beta tester wil in groepsapp: ${firstName} ${lastName}`,
+          `<p><strong>${firstName} ${lastName}</strong> (${company}) wil worden toegevoegd aan de WhatsApp groepsapp.</p>
+           <p>Telefoonnummer: <strong>${phone}</strong></p>
+           <p>E-mail: ${email}</p>
+           <p>Code: ${code}</p>`
+        );
+      }
     } catch (mailErr) {
       console.error('Graph mail error:', mailErr.message);
     }
