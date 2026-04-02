@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aanmelden Fill Rate Light NL Beta | BIM LYNK</title>
+    <meta name="description" content="Meld je aan voor de Fill Rate Light NL Beta. Ontvang een persoonlijke activatiecode en test de vulgraadberekening tool voor Revit.">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .signup-section { padding: 140px 0 80px; }
+        .signup-card {
+            background: var(--white); border-radius: 16px; padding: 48px;
+            max-width: 600px; margin: 0 auto; box-shadow: 0 16px 48px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+        .signup-card h2 { margin-bottom: 8px; }
+        .signup-card .subtitle { color: var(--gray-mid); margin-bottom: 32px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 6px; color: var(--black); }
+        .form-group label .required { color: #FF3B30; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 8px;
+            font-family: var(--font-body); font-size: 0.95rem; transition: border-color var(--transition), box-shadow var(--transition);
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(32,67,62,0.1);
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .beta-info { background: var(--teal-bg); border-radius: 12px; padding: 20px; margin-bottom: 32px; }
+        .beta-info h4 { color: var(--teal); margin-bottom: 8px; }
+        .beta-info p { color: var(--gray-dark); font-size: 0.9rem; margin-bottom: 0; }
+        .beta-info ul { margin-top: 8px; padding-left: 20px; }
+        .beta-info li { color: var(--gray-dark); font-size: 0.9rem; margin-bottom: 4px; list-style: disc; }
+        .success-message { display: none; text-align: center; padding: 40px 20px; }
+        .success-icon { font-size: 3rem; margin-bottom: 16px; }
+        .success-message h2 { color: var(--teal); margin-bottom: 12px; }
+        .success-message p { color: var(--gray-dark); }
+        .error-message { display: none; background: rgba(255,59,48,0.1); color: #FF3B30; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem; }
+        @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } .signup-card { padding: 28px; } }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="container header-inner">
+            <a href="index.html" class="logo"><img src="img/logo.png" alt="LYNK BIM"><span class="logo-text">BIM LYNK</span></a>
+            <nav class="nav-links">
+                <a href="tools.html">Tools</a>
+                <a href="fill-rate.html">Fill Rate Light NL <span class="badge badge-red" style="font-size:0.65rem;padding:2px 8px;margin-left:4px;">Beta</span></a>
+                <a href="beta.html">Beta Tester</a>
+                <a href="contact.html" class="btn btn-teal btn-sm nav-cta">Contact</a>
+            </nav>
+            <button class="hamburger" aria-label="Menu"><span></span><span></span><span></span></button>
+        </div>
+        <div class="mobile-menu">
+            <a href="index.html">Home</a>
+            <a href="tools.html">Tools</a>
+            <a href="fill-rate.html">Fill Rate Light NL (Beta)</a>
+            <a href="beta.html">Beta Tester</a>
+            <a href="contact.html">Contact</a>
+        </div>
+    </header>
+
+    <section class="signup-section" style="background: var(--gray-light); min-height: 100vh;">
+        <div class="container">
+
+            <div class="signup-card" id="signupForm">
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <span class="badge badge-red">Beta</span>
+                    <span class="badge badge-teal" style="margin-left: 4px;">7 april - 13 juli 2026 (verlenging mogelijk indien nodig)</span>
+                </div>
+
+                <h2 style="text-align: center;">Aanmelden voor Fill Rate Light NL</h2>
+                <p class="subtitle" style="text-align: center;">Ontvang een persoonlijke activatiecode voor de beta.</p>
+
+                <div class="beta-info">
+                    <h4>Wat je krijgt</h4>
+                    <ul>
+                        <li>Persoonlijke activatiecode geldig tot 14 juli 2026</li>
+                        <li>Volledige toegang tot Fill Rate Light NL</li>
+                        <li>Standalone vulgraadberekening voor Revit 2023-2026</li>
+                        <li>Reactie binnen twee werkdagen van het ontwikkelteam</li>
+                    </ul>
+                    <p style="margin-top: 12px; font-weight: 600; color: var(--teal); font-size: 0.9rem;">De beta tester met de meest waardevolle feedback maakt kans op een lifetime license voor LYNK Electrical!</p>
+                </div>
+
+                <div class="error-message" id="errorMsg"></div>
+
+                <form name="beta-signup" data-netlify="true" onsubmit="handleSignup(event)">
+                    <input type="hidden" name="form-name" value="beta-signup">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Voornaam <span class="required">*</span></label>
+                            <input type="text" id="firstName" required placeholder="Voornaam">
+                        </div>
+                        <div class="form-group">
+                            <label>Achternaam <span class="required">*</span></label>
+                            <input type="text" id="lastName" required placeholder="Achternaam">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Bedrijfsnaam <span class="required">*</span></label>
+                        <input type="text" id="company" required placeholder="Naam van uw bedrijf of bureau">
+                    </div>
+
+                    <div class="form-group">
+                        <label>E-mailadres <span class="required">*</span></label>
+                        <input type="email" id="email" required placeholder="uw@email.nl">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Functie</label>
+                        <select id="role">
+                            <option value="">Selecteer uw functie</option>
+                            <option value="bim-engineer">BIM-engineer</option>
+                            <option value="elektrotechnisch-engineer">Elektrotechnisch engineer</option>
+                            <option value="adviseur">Adviseur</option>
+                            <option value="projectleider">Projectleider</option>
+                            <option value="tekenaar">Tekenaar / Modelleur</option>
+                            <option value="anders">Anders</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Welke Revit versie(s) gebruikt u?</label>
+                        <select id="revitVersion">
+                            <option value="">Selecteer versie</option>
+                            <option value="2023">Revit 2023</option>
+                            <option value="2024">Revit 2024</option>
+                            <option value="2025">Revit 2025</option>
+                            <option value="2026">Revit 2026</option>
+                            <option value="meerdere">Meerdere versies</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-teal" style="width: 100%; justify-content: center; margin-top: 8px;">
+                        Aanmelden voor Beta
+                    </button>
+
+                    <p style="text-align: center; font-size: 0.8rem; color: var(--gray-mid); margin-top: 16px;">
+                        Maximaal 100 beta testers. Een code per e-mailadres. Na aanmelding ontvangt u uw persoonlijke activatiecode per e-mail.
+                    </p>
+                </form>
+            </div>
+
+            <!-- Success: Voor 7 april -->
+            <div class="signup-card success-message" id="successMsgBefore">
+                <div class="success-icon">&#10003;</div>
+                <h2>Aanmelding ontvangen!</h2>
+                <p>Bedankt voor uw aanmelding voor de Fill Rate Light NL Beta.</p>
+                <p>U ontvangt een bevestigingsmail op het opgegeven e-mailadres.</p>
+                <div class="beta-info" style="margin-top: 24px; text-align: left;">
+                    <h4>Wat nu?</h4>
+                    <p style="font-weight: 600; color: var(--teal);">De beta start op 7 april 2026.</p>
+                    <ul>
+                        <li>U ontvangt op 7 april automatisch een e-mail met uw persoonlijke activatiecode en downloadlink</li>
+                        <li>Tot die tijd hoeft u niets te doen</li>
+                        <li>De code is geldig tot 14 juli 2026</li>
+                        <li>Check ook uw spam-map op 7 april</li>
+                    </ul>
+                </div>
+                <a href="index.html" class="btn btn-outline" style="margin-top: 24px;">Terug naar home</a>
+            </div>
+
+            <!-- Success: Vanaf 7 april -->
+            <div class="signup-card success-message" id="successMsgAfter">
+                <div class="success-icon">&#10003;</div>
+                <h2>Welkom bij de Beta!</h2>
+                <p>Bedankt voor uw aanmelding voor de Fill Rate Light NL Beta.</p>
+                <p style="font-weight: 600; color: var(--teal);">Uw persoonlijke activatiecode en downloadlink zijn verzonden naar uw e-mailadres.</p>
+                <div class="beta-info" style="margin-top: 24px; text-align: left;">
+                    <h4>Aan de slag</h4>
+                    <ul>
+                        <li>Check uw inbox (en spam-map) voor de e-mail van BIM LYNK</li>
+                        <li>Download Fill Rate Light NL via de link in de e-mail</li>
+                        <li>Voer uw persoonlijke activatiecode in bij het eerste gebruik</li>
+                        <li>De code is geldig tot 14 juli 2026</li>
+                    </ul>
+                </div>
+                <a href="index.html" class="btn btn-outline" style="margin-top: 24px;">Terug naar home</a>
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo-text">BIM LYNK</div>
+                    <p>Voor (BIM-)Engineers, door BIM-Engineers. Onderdeel van CVL Solutions.</p>
+                </div>
+                <div>
+                    <h4>Product</h4>
+                    <div class="footer-links">
+                        <a href="tools.html">Alle Tools</a>
+                        <a href="fill-rate.html">Fill Rate Light NL</a>
+                        <a href="beta.html">Beta Tester</a>
+                    </div>
+                </div>
+                <div>
+                    <h4>Contact</h4>
+                    <div class="footer-links">
+                        <a href="mailto:info@bimlynk.com">info@bimlynk.com</a>
+                        <a href="contact.html">Contact opnemen</a>
+                        <a href="https://cvlsolutions.nl" target="_blank">CVL Solutions</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>&copy; 2026 BIM LYNK - part of CVL Solutions</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+    async function handleSignup(e) {
+        e.preventDefault();
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const company = document.getElementById('company').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const role = document.getElementById('role').value;
+        const revitVersion = document.getElementById('revitVersion').value;
+        const errorMsg = document.getElementById('errorMsg');
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+
+        errorMsg.style.display = 'none';
+
+        // Validation
+        if (!firstName || !lastName || !company || !email) {
+            errorMsg.textContent = 'Vul alle verplichte velden in.';
+            errorMsg.style.display = 'block';
+            return;
+        }
+
+        // Disable button during request
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Bezig met aanmelden...';
+
+        try {
+            const response = await fetch('/.netlify/functions/beta-signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ firstName, lastName, company, email, role, revitVersion })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                errorMsg.textContent = result.error || 'Er is een fout opgetreden.';
+                errorMsg.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Aanmelden voor Beta';
+                return;
+            }
+
+            // Show success based on beta status
+            document.getElementById('signupForm').style.display = 'none';
+
+            if (result.isBetaLive) {
+                document.getElementById('successMsgAfter').style.display = 'block';
+            } else {
+                document.getElementById('successMsgBefore').style.display = 'block';
+            }
+
+        } catch (err) {
+            errorMsg.textContent = 'Er is een verbindingsfout opgetreden. Probeer het later opnieuw.';
+            errorMsg.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Aanmelden voor Beta';
+        }
+    }
+    </script>
+</body>
+</html>

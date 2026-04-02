@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact | BIM LYNK</title>
+    <meta name="description" content="Neem contact op met BIM LYNK. Vragen over Fill Rate Light NL (beta), LYNK Electrical (betaald) of samenwerking? Voor (BIM-)Engineers, door BIM-Engineers.">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .contact-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 64px;
+            align-items: start;
+        }
+        .contact-info h3 {
+            margin-bottom: 16px;
+        }
+        .contact-info p {
+            color: var(--gray-dark);
+            font-size: 0.95rem;
+        }
+        .contact-info a {
+            color: var(--teal);
+            font-weight: 600;
+        }
+        .contact-info a:hover {
+            color: var(--teal-light);
+        }
+        .contact-detail {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .contact-detail:last-child {
+            border-bottom: none;
+        }
+        .contact-detail-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--teal-bg);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: var(--teal);
+            font-size: 1.1rem;
+        }
+        .contact-form {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 40px;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.06);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--black);
+            margin-bottom: 8px;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            color: var(--black);
+            background: var(--white);
+            transition: border-color var(--transition);
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--teal);
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 140px;
+        }
+        .form-group select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238E8E93' stroke-width='2' fill='none'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+        .form-note {
+            font-size: 0.85rem;
+            color: var(--gray-mid);
+            margin-top: 12px;
+        }
+        @media (max-width: 968px) {
+            .contact-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container header-inner">
+            <a href="index.html" class="logo">
+                <img src="img/logo.png" alt="BIM LYNK">
+                <span class="logo-text">BIM LYNK</span>
+            </a>
+            <nav class="nav-links">
+                <a href="tools.html">LYNK Electrical</a>
+                <a href="fill-rate.html">Fill Rate Light NL <span class="badge badge-red" style="font-size: 0.65rem; padding: 2px 8px; margin-left: 4px;">Beta</span></a>
+                <a href="beta.html">Beta Tester</a>
+                <a href="contact.html" class="btn btn-teal btn-sm nav-cta active">Contact</a>
+            </nav>
+            <button class="hamburger" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+        <div class="mobile-menu">
+            <a href="index.html">Home</a>
+            <a href="tools.html">LYNK Electrical</a>
+            <a href="fill-rate.html">Fill Rate Light NL <span class="badge badge-red" style="font-size: 0.65rem; padding: 2px 8px; margin-left: 4px;">Beta</span></a>
+            <a href="beta.html">Beta Tester</a>
+            <a href="contact.html">Contact</a>
+        </div>
+    </header>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1>Neem contact op</h1>
+            <p>Heb je een vraag over Fill Rate Light NL (beta), LYNK Electrical (betaald) of samenwerking? Laat het ons weten.</p>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="section">
+        <div class="container">
+            <div class="contact-grid">
+                <!-- Contact Info -->
+                <div class="contact-info reveal">
+                    <h3>Contactgegevens</h3>
+                    <p>BIM LYNK is onderdeel van CVL Solutions, gevestigd in Amersfoort. Voor (BIM-)Engineers, door BIM-Engineers. We staan klaar om je vragen te beantwoorden.</p>
+
+                    <div class="contact-detail">
+                        <div class="contact-detail-icon">&#9993;</div>
+                        <div>
+                            <strong>E-mail</strong><br>
+                            <a href="mailto:info@bimlynk.com">info@bimlynk.com</a>
+                        </div>
+                    </div>
+                    <div class="contact-detail">
+                        <div class="contact-detail-icon">&#9742;</div>
+                        <div>
+                            <strong>Telefoon</strong><br>
+                            <a href="https://wa.me/31613277621?text=Goedendag%2C%20ik%20wil%20graag%20contact%20opnemen%20met%20BIM%20LYNK%20over%20jullie%20Revit%20tools.">06 1327 7621 (WhatsApp)</a>
+                        </div>
+                    </div>
+                    <div class="contact-detail">
+                        <div class="contact-detail-icon">&#9873;</div>
+                        <div>
+                            <strong>Adres</strong><br>
+                            <span style="color: var(--gray-dark);">Databankweg 26<br>3821 AL Amersfoort</span>
+                        </div>
+                    </div>
+                    <div class="contact-detail">
+                        <div class="contact-detail-icon">&#9881;</div>
+                        <div>
+                            <strong>Organisatie</strong><br>
+                            <span style="color: var(--gray-dark);">CVL Solutions</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 32px; padding: 24px; background: var(--teal-bg); border-radius: 12px;">
+                        <h3 style="font-size: 1rem; margin-bottom: 8px;">Onze producten</h3>
+                        <p style="margin-bottom: 8px; font-size: 0.85rem;"><strong>Fill Rate Light NL</strong> - Standalone vulgraadtool (beta)</p>
+                        <p style="margin-bottom: 12px; font-size: 0.85rem;"><strong>LYNK Electrical</strong> - Betaalde Revit add-in (V1: Clearance + Support Generator)</p>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <a href="fill-rate.html" class="btn btn-green" style="padding: 8px 16px; font-size: 0.8rem;">Fill Rate Light</a>
+                            <a href="tools.html" class="btn btn-teal" style="padding: 8px 16px; font-size: 0.8rem;">LYNK Electrical</a>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 24px; background: linear-gradient(135deg, var(--teal-dark), var(--teal)); border-radius: 12px; color: white;">
+                        <h3 style="font-size: 1rem; margin-bottom: 8px; color: white;">Geen capaciteit of kennis in huis?</h3>
+                        <p style="font-size: 0.85rem; color: rgba(255,255,255,0.8); margin-bottom: 12px;">Wij helpen ook met de implementatie. CVL Solutions biedt elektrotechnische engineering en BIM-modellering als dienst aan.</p>
+                        <a href="https://cvlsolutions.nl/contact.html" target="_blank" class="btn btn-white" style="padding: 10px 20px; font-size: 0.85rem; width: 100%; justify-content: center;">Naar CVL Solutions &rarr;</a>
+                    </div>
+                </div>
+
+                <!-- Contact Form -->
+                <div class="contact-form reveal">
+                    <form action="#" method="post">
+                        <div class="form-group">
+                            <label for="name">Naam</label>
+                            <input type="text" id="name" name="name" placeholder="Je volledige naam" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">E-mailadres</label>
+                            <input type="email" id="email" name="email" placeholder="je@email.nl" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="subject">Onderwerp</label>
+                            <select id="subject" name="subject" required>
+                                <option value="" disabled selected>Selecteer een onderwerp</option>
+                                <option value="fillrate">Vraag over Fill Rate Light NL (beta)</option>
+                                <option value="lynk">Vraag over LYNK Electrical (betaald)</option>
+                                <option value="beta-fillrate">Beta aanmelding - Fill Rate Light NL</option>
+                                <option value="beta-lynk">Beta aanmelding - LYNK Electrical</option>
+                                <option value="samenwerking">Samenwerking</option>
+                                <option value="anders">Anders</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Bericht</label>
+                            <textarea id="message" name="message" placeholder="Schrijf je bericht hier..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-teal" style="width: 100%; justify-content: center;">Verstuur bericht</button>
+                        <p class="form-note">We reageren doorgaans binnen 2 werkdagen.</p>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Google Maps -->
+    <section style="padding: 0; height: 400px;">
+        <iframe src="https://maps.google.com/maps?q=Databankweg+26,+3821+AL+Amersfoort,+Nederland&t=k&z=17&ie=UTF8&iwloc=&output=embed" width="100%" height="400" style="border:0; display:block;" allowfullscreen="" loading="lazy" title="BIM LYNK locatie - Databankweg 26, Amersfoort"></iframe>
+    </section>
+
+    <!-- Beta CTA -->
+    <section class="cta-section">
+        <div class="container reveal">
+            <h2>Word Beta Tester</h2>
+            <p>Twee tracks: Fill Rate Light NL (beta) en LYNK Electrical. Meld je aan en krijg als eerste toegang.</p>
+            <form class="beta-form" action="#" method="post">
+                <input type="email" placeholder="Je e-mailadres" required>
+                <button type="submit" class="btn btn-green">Aanmelden</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="logo-text">BIM LYNK</div>
+                    <p>Voor (BIM-)Engineers, door BIM-Engineers. BIM LYNK ontwikkelt Revit tools voor elektrotechnische engineering. Onderdeel van CVL Solutions.</p>
+                </div>
+                <div>
+                    <h4>Producten</h4>
+                    <div class="footer-links">
+                        <a href="fill-rate.html">Fill Rate Light NL (Beta)</a>
+                        <a href="tools.html">LYNK Electrical V1</a>
+                        <a href="beta.html">Beta Tester</a>
+                    </div>
+                </div>
+                <div>
+                    <h4>Contact</h4>
+                    <div class="footer-links">
+                        <a href="mailto:info@bimlynk.com">info@bimlynk.com</a>
+                        <a href="contact.html">Contactformulier</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>&copy; 2026 BIM LYNK - onderdeel van CVL Solutions</span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
