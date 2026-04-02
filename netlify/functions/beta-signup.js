@@ -57,7 +57,7 @@ exports.handler = async (event, context) => {
 
   try {
     // Get blob store
-    const store = getStore({ name: 'beta-codes', siteID: context.site.id, token: context.token });
+    const store = getStore('beta-codes');
 
     // Check duplicate
     let existing = null;
