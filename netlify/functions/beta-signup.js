@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const { getStore } = require('@netlify/blobs');
+const https = require('https');
 
 const BETA_CODES = [
   'LYNK-H3GS-A6LS','LYNK-ELY1-OS2S','LYNK-KOSH-8XGL','LYNK-YCSH-8ZVF','LYNK-2JRH-LL6W',
@@ -27,73 +27,99 @@ const BETA_CODES = [
 const BETA_START = new Date('2026-04-07');
 const BETA_END = '14 juli 2026';
 
-exports.handler = async (event, context) => {
+// Simple in-memory tracking via Netlify env var BETA_SIGNUPS (JSON string)
+// We read/write via Netlify API to persist between invocations
+
+async function getSignups() {
+  try {
+    const siteId = process.env.MY_SITE_ID;
+    const token = process.env.NETLIFY_API_TOKEN;
+    if (!token || !siteId) return JSON.parse(process.env.BETA_SIGNUPS || '[]');
+
+    return new Promise((resolve) => {
+      https.get(`https://api.netlify.com/api/v1/sites/${siteId}/env/BETA_SIGNUPS`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }, (res) => {
+        let data = '';
+        res.on('data', c => data += c);
+        res.on('end', () => {
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.values && parsed.values[0]) {
+              resolve(JSON.parse(parsed.values[0].value));
+            } else {
+              resolve([]);
+            }
+          } catch { resolve([]); }
+        });
+      }).on('error', () => resolve([]));
+    });
+  } catch { return []; }
+}
+
+async function saveSignup(signups) {
+  const siteId = process.env.MY_SITE_ID;
+  const token = process.env.NETLIFY_API_TOKEN;
+  if (!token || !siteId) return;
+
+  const body = JSON.stringify({ key: 'BETA_SIGNUPS', values: [{ value: JSON.stringify(signups), context: 'all' }] });
+
+  return new Promise((resolve) => {
+    const req = https.request(`https://api.netlify.com/api/v1/sites/${siteId}/env/BETA_SIGNUPS`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(body)
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => resolve(data));
+    });
+    req.on('error', () => resolve(null));
+    req.write(body);
+    req.end();
+  });
+}
+
+exports.handler = async (event) => {
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type'
   };
 
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
-  }
-
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
+  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
+  if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
 
   let data;
-  try {
-    data = JSON.parse(event.body);
-  } catch (e) {
-    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Ongeldige data.' }) };
-  }
+  try { data = JSON.parse(event.body); } catch { return { statusCode: 400, headers, body: JSON.stringify({ error: 'Ongeldige data.' }) }; }
 
   const { firstName, lastName, company, email, role, revitVersion } = data;
-
   if (!firstName || !lastName || !company || !email) {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Vul alle verplichte velden in.' }) };
   }
 
   try {
-    // Get blob store
-    const store = getStore('beta-codes');
+    const signups = await getSignups();
 
     // Check duplicate
-    let existing = null;
-    try {
-      existing = await store.get(email.toLowerCase());
-    } catch (e) {
-      // Key not found is fine
-    }
-
-    if (existing) {
+    if (signups.find(s => s.email.toLowerCase() === email.toLowerCase())) {
       return { statusCode: 409, headers, body: JSON.stringify({ error: 'Dit e-mailadres is al aangemeld.' }) };
     }
 
-    // Get counter
-    let counter = 0;
-    try {
-      const counterVal = await store.get('_counter');
-      if (counterVal) counter = parseInt(counterVal);
-    } catch (e) {
-      // First signup
-    }
-
-    if (counter >= BETA_CODES.length) {
+    if (signups.length >= BETA_CODES.length) {
       return { statusCode: 410, headers, body: JSON.stringify({ error: 'Het maximale aantal beta testers (100) is bereikt.' }) };
     }
 
-    const code = BETA_CODES[counter];
+    const code = BETA_CODES[signups.length];
     const now = new Date();
     const isBetaLive = now >= BETA_START;
 
-    // Save assignment
-    await store.set(email.toLowerCase(), JSON.stringify({
-      code, firstName, lastName, company, email, role, revitVersion,
-      assignedDate: now.toISOString()
-    }));
-    await store.set('_counter', String(counter + 1));
+    // Save
+    signups.push({ firstName, lastName, company, email, role, revitVersion, code, date: now.toISOString() });
+    await saveSignup(signups);
 
     // Send email
     let emailSent = false;
@@ -102,10 +128,7 @@ exports.handler = async (event, context) => {
         host: 'smtp.office365.com',
         port: 587,
         secure: false,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS
-        }
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
       });
 
       await transporter.sendMail({
@@ -117,29 +140,20 @@ exports.handler = async (event, context) => {
       emailSent = true;
     } catch (mailErr) {
       console.error('SMTP error:', mailErr.message);
-      // Signup is saved, email failed - we can resend later
     }
 
     return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        isBetaLive,
-        emailSent,
-        message: isBetaLive
-          ? 'Uw activatiecode is verzonden per e-mail.'
-          : 'Aanmelding ontvangen. U ontvangt uw code op 7 april.'
+      statusCode: 200, headers,
+      body: JSON.stringify({ success: true, isBetaLive, emailSent,
+        message: emailSent
+          ? (isBetaLive ? 'Uw activatiecode is verzonden per e-mail.' : 'Aanmelding ontvangen. U ontvangt uw code op 7 april.')
+          : 'Aanmelding opgeslagen. De bevestigingsmail wordt zo snel mogelijk verstuurd.'
       })
     };
 
   } catch (error) {
-    console.error('Function error:', error.message, error.stack);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: 'Er is een fout opgetreden: ' + error.message })
-    };
+    console.error('Error:', error.message);
+    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Er is een fout opgetreden: ' + error.message }) };
   }
 };
 
@@ -149,16 +163,14 @@ function getPreBetaEmail(firstName, code) {
 <div style="max-width:560px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;">
 <div style="background:#20433e;padding:32px;text-align:center;">
 <h1 style="color:white;margin:0;font-size:24px;">BIM LYNK</h1>
-<p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">Voor (BIM-)Engineers, door BIM-Engineers</p>
-</div>
+<p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">Voor (BIM-)Engineers, door BIM-Engineers</p></div>
 <div style="padding:32px;">
 <h2 style="color:#1C1C1E;margin:0 0 16px;">Hallo ${firstName},</h2>
 <p style="color:#3C3C43;line-height:1.7;">Bedankt voor je aanmelding voor de <strong>Fill Rate Light NL Beta</strong>!</p>
 <p style="color:#3C3C43;line-height:1.7;">De beta start op <strong>7 april 2026</strong>. Op die datum ontvang je automatisch een e-mail met je persoonlijke activatiecode en downloadlink.</p>
 <div style="background:#E8F0EE;border-radius:8px;padding:20px;margin:24px 0;">
 <p style="margin:0;color:#20433e;font-weight:600;">Je persoonlijke code is gereserveerd</p>
-<p style="margin:8px 0 0;color:#3C3C43;font-size:14px;">Tot 7 april hoef je niets te doen. Wij sturen je alles wat je nodig hebt.</p>
-</div>
+<p style="margin:8px 0 0;color:#3C3C43;font-size:14px;">Tot 7 april hoef je niets te doen. Wij sturen je alles wat je nodig hebt.</p></div>
 <p style="color:#3C3C43;line-height:1.7;">De beta tester met de meest waardevolle feedback maakt kans op een <strong>lifetime license</strong> voor LYNK Electrical!</p>
 <p style="color:#8E8E93;font-size:13px;margin-top:32px;">Vragen? Mail naar <a href="mailto:info@bimlynk.com" style="color:#20433e;">info@bimlynk.com</a>. Reactie binnen twee werkdagen.</p>
 </div>
@@ -173,27 +185,23 @@ function getBetaLiveEmail(firstName, code) {
 <div style="max-width:560px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;">
 <div style="background:#20433e;padding:32px;text-align:center;">
 <h1 style="color:white;margin:0;font-size:24px;">BIM LYNK</h1>
-<p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">Voor (BIM-)Engineers, door BIM-Engineers</p>
-</div>
+<p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">Voor (BIM-)Engineers, door BIM-Engineers</p></div>
 <div style="padding:32px;">
 <h2 style="color:#1C1C1E;margin:0 0 16px;">Welkom bij de Beta, ${firstName}!</h2>
 <p style="color:#3C3C43;line-height:1.7;">Bedankt voor je aanmelding. Hieronder vind je je persoonlijke activatiecode voor <strong>Fill Rate Light NL</strong>.</p>
 <div style="background:#20433e;border-radius:12px;padding:24px;margin:24px 0;text-align:center;">
 <p style="color:rgba(255,255,255,0.7);font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:1px;">Je activatiecode</p>
 <p style="color:white;font-size:32px;font-weight:700;margin:0;letter-spacing:3px;font-family:'Courier New',monospace;">${code}</p>
-<p style="color:rgba(255,255,255,0.5);font-size:12px;margin:12px 0 0;">Geldig tot ${BETA_END}</p>
-</div>
+<p style="color:rgba(255,255,255,0.5);font-size:12px;margin:12px 0 0;">Geldig tot ${BETA_END}</p></div>
 <h3 style="color:#1C1C1E;margin:24px 0 12px;">Aan de slag</h3>
 <ol style="color:#3C3C43;line-height:2;padding-left:20px;">
 <li>Download Fill Rate Light NL (link volgt separaat)</li>
 <li>Installeer de tool in Revit (2023, 2024, 2025 of 2026)</li>
 <li>Voer bovenstaande activatiecode in bij het eerste gebruik</li>
-<li>Start met vulgraadberekeningen!</li>
-</ol>
+<li>Start met vulgraadberekeningen!</li></ol>
 <div style="background:#E8F0EE;border-radius:8px;padding:20px;margin:24px 0;">
 <p style="margin:0;color:#20433e;font-weight:600;">Lifetime license kans</p>
-<p style="margin:8px 0 0;color:#3C3C43;font-size:14px;">De beta tester met de meest waardevolle feedback maakt kans op een lifetime license voor LYNK Electrical!</p>
-</div>
+<p style="margin:8px 0 0;color:#3C3C43;font-size:14px;">De beta tester met de meest waardevolle feedback maakt kans op een lifetime license voor LYNK Electrical!</p></div>
 <p style="color:#8E8E93;font-size:13px;margin-top:32px;">Feedback of vragen? Mail naar <a href="mailto:info@bimlynk.com" style="color:#20433e;">info@bimlynk.com</a>. Reactie binnen twee werkdagen.</p>
 </div>
 <div style="background:#F2F2F7;padding:20px;text-align:center;">
