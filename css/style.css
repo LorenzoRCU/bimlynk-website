@@ -103,10 +103,11 @@ p { margin-bottom: 1rem; }
 .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; background: none; border: none; }
 .hamburger span { display: block; width: 24px; height: 2px; background: var(--black); transition: all var(--transition); }
 
-.mobile-menu { display: none; position: fixed; top: 72px; left: 0; width: 100%; background: var(--white); padding: 24px; border-bottom: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+.mobile-menu { display: none; position: fixed; top: 72px; left: 0; width: 100%; background: var(--white); padding: 24px; border-bottom: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,0.1); z-index: 999; }
 .mobile-menu.open { display: block; }
 .mobile-menu a { display: block; padding: 12px 0; font-size: 1rem; font-weight: 500; color: var(--gray-dark); border-bottom: 1px solid var(--gray-light); }
 .mobile-menu a:last-child { border-bottom: none; }
+.mobile-menu a:hover { color: var(--teal); }
 
 /* --- Hero --- */
 .hero {
@@ -246,6 +247,29 @@ p { margin-bottom: 1rem; }
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     .feature-grid { grid-template-columns: 1fr; gap: 40px; }
     .footer-grid { grid-template-columns: 1fr 1fr; }
+    .product-card { padding: 32px 24px; }
+    .tool-card { padding: 24px 20px; }
+}
+
+@media (max-width: 640px) {
+    .section { padding: 64px 0; }
+    .hero { padding: 100px 0 60px; }
+    .hero h1 { font-size: 1.8rem; }
+    .hero-buttons { flex-direction: column; }
+    .hero-buttons .btn { width: 100%; justify-content: center; }
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+    .tools-grid { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+    .footer-bottom { flex-direction: column; gap: 12px; text-align: center; }
+    .page-header { padding: 100px 0 40px; }
+    .page-header h1 { font-size: 1.6rem; }
+    .section-header { margin-bottom: 40px; }
+    .beta-form { flex-direction: column; }
+    .beta-form input { min-width: auto; width: 100%; }
+    .product-card { padding: 28px 20px; }
+    .product-card .price { font-size: 2rem; }
+    .feature-list li { font-size: 0.85rem; }
+    .container { padding: 0 16px; }
 }
 
 /* --- Pricing Styles --- */
