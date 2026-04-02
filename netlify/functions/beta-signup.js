@@ -72,17 +72,19 @@ async function sendEmail(token, to, subject, htmlBody) {
   }
 }
 
-// Simple persistent storage via Netlify env var
+// Persistent storage via Netlify env API
+const ACCOUNT_SLUG = 'LorenzoRCU';
+
 async function getSignups() {
   try {
     const siteId = process.env.MY_SITE_ID;
     const token = process.env.NETLIFY_API_TOKEN;
     if (!token || !siteId) return JSON.parse(process.env.BETA_SIGNUPS || '[]');
 
-    const res = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/env/BETA_SIGNUPS`, {
+    const res = await fetch(`https://api.netlify.com/api/v1/accounts/${ACCOUNT_SLUG}/env/BETA_SIGNUPS?site_id=${siteId}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (!res.ok) return [];
+    if (!res.ok) return JSON.parse(process.env.BETA_SIGNUPS || '[]');
     const data = await res.json();
     if (data.values && data.values[0]) return JSON.parse(data.values[0].value);
     return [];
@@ -94,25 +96,16 @@ async function saveSignups(signups) {
   const token = process.env.NETLIFY_API_TOKEN;
   if (!token || !siteId) return;
 
-  // Try PATCH first (update existing), fall back to POST (create new)
   const body = JSON.stringify({
     key: 'BETA_SIGNUPS',
     values: [{ value: JSON.stringify(signups), context: 'all' }]
   });
 
-  let res = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/env/BETA_SIGNUPS`, {
+  await fetch(`https://api.netlify.com/api/v1/accounts/${ACCOUNT_SLUG}/env/BETA_SIGNUPS?site_id=${siteId}`, {
     method: 'PATCH',
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
     body
   });
-
-  if (!res.ok) {
-    res = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/env`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify([{ key: 'BETA_SIGNUPS', values: [{ value: JSON.stringify(signups), context: 'all' }] }])
-    });
-  }
 }
 
 exports.handler = async (event) => {
