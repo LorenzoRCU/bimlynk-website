@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beta Portaal Dashboard | BIM LYNK</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { background: var(--gray-light); min-height: 100vh; }
+
+        .portal-header { background: var(--teal-dark); padding: 0; position: sticky; top: 0; z-index: 100; }
+        .portal-header-inner { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; max-width: 1200px; margin: 0 auto; flex-wrap: wrap; gap: 8px; }
+        .portal-header .logo { display: flex; align-items: center; gap: 8px; }
+        .portal-header .logo img { height: 32px; }
+        .portal-header .logo-text { color: white; font-size: 1rem; }
+        .portal-header .user-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .portal-header .user-tag { background: rgba(255,255,255,0.15); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; }
+        .portal-header .logout-btn { background: none; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 6px 16px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; }
+        .portal-header .logout-btn:hover { background: rgba(255,255,255,0.1); }
+
+        .portal-tabs { background: white; border-bottom: 1px solid var(--border); position: sticky; top: 56px; z-index: 99; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .portal-tabs-inner { display: flex; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .portal-tab { padding: 14px 20px; font-size: 0.85rem; font-weight: 600; color: var(--gray-mid); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; background: none; border-top: none; border-left: none; border-right: none; font-family: var(--font-body); }
+        .portal-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+        .portal-content { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 16px; border: 1px solid var(--border); }
+        .card h3 { margin-bottom: 12px; font-size: 1rem; }
+
+        /* Feedback */
+        .feedback-form textarea { width: 100%; min-height: 100px; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-family: var(--font-body); font-size: 0.9rem; resize: vertical; box-sizing: border-box; }
+        .feedback-form textarea:focus { outline: none; border-color: var(--teal); }
+        .feedback-form select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; margin-bottom: 12px; font-family: var(--font-body); box-sizing: border-box; }
+        .feedback-item { border-left: 3px solid var(--teal); padding: 16px; margin-bottom: 12px; background: var(--gray-light); border-radius: 0 8px 8px 0; }
+        .feedback-item .meta { font-size: 0.75rem; color: var(--gray-mid); margin-bottom: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .feedback-item .message { font-size: 0.9rem; line-height: 1.6; }
+        .feedback-item .tool-badge { background: rgba(32,67,62,0.1); color: var(--teal); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600; }
+        .reply { margin-left: 20px; margin-top: 8px; padding: 12px; background: white; border-radius: 8px; border: 1px solid var(--border); }
+        .reply.admin-reply { border-left: 3px solid var(--green); }
+        .reply .meta { font-size: 0.7rem; color: var(--gray-mid); margin-bottom: 4px; }
+        .reply-form { margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+        .reply-form input { flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; font-family: var(--font-body); box-sizing: border-box; }
+        .reply-form button { padding: 8px 16px; background: var(--teal); color: white; border: none; border-radius: 6px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; }
+
+        /* Admin panel */
+        .signup-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .signup-table th, .signup-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        .signup-table th { background: var(--gray-light); font-weight: 600; color: var(--gray-dark); position: sticky; top: 0; }
+        .signup-table tr:hover td { background: rgba(32,67,62,0.03); }
+
+        .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 10px; padding: 16px; text-align: center; border: 1px solid var(--border); }
+        .stat-card .num { font-family: var(--font-heading); font-size: 1.8rem; font-weight: 700; color: var(--teal); }
+        .stat-card .lbl { font-size: 0.75rem; color: var(--gray-mid); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .hidden { display: none; }
+        .loading { text-align: center; padding: 40px; color: var(--gray-mid); }
+
+        @media (max-width: 640px) {
+            .portal-header-inner { padding: 10px 16px; }
+            .portal-content { padding: 16px; }
+            .card { padding: 16px; }
+            .reply { margin-left: 8px; }
+            .feedback-item { padding: 12px; }
+            .stat-cards { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="portal-header">
+        <div class="portal-header-inner">
+            <a href="index.html" class="logo"><img src="img/logo.png" alt="LYNK"><span class="logo-text">Beta Portaal</span></a>
+            <div class="user-info">
+                <span class="user-tag" id="userTag"></span>
+                <button class="logout-btn" onclick="logout()">Uitloggen</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="portal-tabs">
+        <div class="portal-tabs-inner">
+            <button class="portal-tab active" onclick="showTab('feedback')">Feedback</button>
+            <button class="portal-tab" onclick="showTab('mijn')" id="tabMijn">Mijn Feedback</button>
+            <button class="portal-tab hidden" onclick="showTab('admin')" id="tabAdmin">Aanmeldingen</button>
+        </div>
+    </div>
+
+    <div class="portal-content">
+        <!-- Feedback Tab -->
+        <div id="tab-feedback">
+            <div class="card" id="feedbackFormCard">
+                <h3>Nieuwe feedback plaatsen</h3>
+                <form class="feedback-form" onsubmit="submitFeedback(event)">
+                    <select id="fbTool">
+                        <option value="">Selecteer tool</option>
+                        <option value="Fill Rate Light NL">Fill Rate Light NL</option>
+                        <option value="Cable Tray Clearance">Cable Tray Clearance Generator</option>
+                        <option value="Cable Tray Support">Cable Tray Support Generator</option>
+                        <option value="Algemeen">Algemeen / Overig</option>
+                    </select>
+                    <select id="fbCategory">
+                        <option value="Feedback">Feedback</option>
+                        <option value="Bug">Bug melding</option>
+                        <option value="Feature">Feature verzoek</option>
+                        <option value="Vraag">Vraag</option>
+                    </select>
+                    <textarea id="fbMessage" placeholder="Beschrijf je feedback, bug of verzoek..." required></textarea>
+                    <button type="submit" class="btn btn-teal" style="width:100%;justify-content:center;margin-top:8px;">Plaatsen</button>
+                </form>
+            </div>
+
+            <h3 style="margin: 24px 0 12px; font-size: 1rem;">Alle feedback</h3>
+            <div id="feedbackList"><div class="loading">Laden...</div></div>
+        </div>
+
+        <!-- Mijn Feedback Tab -->
+        <div id="tab-mijn" class="hidden">
+            <h3 style="margin-bottom: 12px;">Mijn geplaatste feedback</h3>
+            <div id="myFeedbackList"><div class="loading">Laden...</div></div>
+        </div>
+
+        <!-- Admin Tab -->
+        <div id="tab-admin" class="hidden">
+            <div class="stat-cards" id="adminStats"></div>
+            <div class="card">
+                <h3>Beta Aanmeldingen</h3>
+                <div style="overflow-x:auto;">
+                    <table class="signup-table" id="signupTable">
+                        <thead><tr><th>#</th><th>Naam</th><th>Bedrijf</th><th>E-mail</th><th>Code</th><th>Datum</th></tr></thead>
+                        <tbody id="signupBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const TOKEN = localStorage.getItem('portal_token');
+    const ROLE = localStorage.getItem('portal_role');
+    const NAME = localStorage.getItem('portal_name');
+    const TAG = localStorage.getItem('portal_tag');
+    let allFeedback = [];
+
+    if (!TOKEN) { window.location.href = 'portal.html'; }
+
+    // Setup UI
+    document.getElementById('userTag').textContent = ROLE === 'admin' ? 'Admin' : TAG;
+    if (ROLE === 'admin') {
+        document.getElementById('tabAdmin').classList.remove('hidden');
+        document.getElementById('feedbackFormCard').classList.add('hidden');
+        document.getElementById('tabMijn').classList.add('hidden');
+    }
+
+    // Load data
+    loadFeedback();
+    if (ROLE === 'admin') loadAdmin();
+
+    async function loadFeedback() {
+        try {
+            const res = await fetch('/.netlify/functions/portal-feedback', {
+                headers: { 'Authorization': 'Bearer ' + TOKEN }
+            });
+            if (res.status === 401) { logout(); return; }
+            const data = await res.json();
+            allFeedback = data.feedback || [];
+            renderFeedback(allFeedback, 'feedbackList');
+            if (ROLE === 'tester') renderMyFeedback();
+        } catch (e) {
+            document.getElementById('feedbackList').innerHTML = '<p style="color:var(--gray-mid);">Kon feedback niet laden.</p>';
+        }
+    }
+
+    function renderFeedback(items, containerId) {
+        const container = document.getElementById(containerId);
+        if (!items.length) { container.innerHTML = '<p style="color:var(--gray-mid);padding:20px;">Nog geen feedback geplaatst.</p>'; return; }
+
+        container.innerHTML = items.map(f => `
+            <div class="feedback-item">
+                <div class="meta">
+                    <span><strong>${f.testerTag || 'Onbekend'}</strong></span>
+                    <span class="tool-badge">${f.tool || 'Algemeen'}</span>
+                    <span>${f.category || ''}</span>
+                    <span>${new Date(f.date).toLocaleDateString('nl-NL')} ${new Date(f.date).toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'})}</span>
+                </div>
+                <div class="message">${escapeHtml(f.message)}</div>
+                ${(f.replies || []).map(r => `
+                    <div class="reply ${r.isAdmin ? 'admin-reply' : ''}">
+                        <div class="meta"><strong>${r.isAdmin ? 'BIM LYNK Team' : r.author || r.testerTag}</strong> &middot; ${new Date(r.date).toLocaleDateString('nl-NL')} ${new Date(r.date).toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'})}</div>
+                        <div class="message">${escapeHtml(r.message)}</div>
+                    </div>
+                `).join('')}
+                <div class="reply-form">
+                    <input type="text" placeholder="Reageer..." id="reply-${f.id}">
+                    <button onclick="submitReply('${f.id}')">Verstuur</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function renderMyFeedback() {
+        const mine = allFeedback.filter(f => f.testerTag === TAG);
+        renderFeedback(mine, 'myFeedbackList');
+    }
+
+    async function loadAdmin() {
+        try {
+            const res = await fetch('/.netlify/functions/portal-auth', {
+                headers: { 'Authorization': 'Bearer ' + TOKEN }
+            });
+            const data = await res.json();
+            if (!data.signups) return;
+
+            document.getElementById('adminStats').innerHTML = `
+                <div class="stat-card"><div class="num">${data.signups.length}</div><div class="lbl">Aanmeldingen</div></div>
+                <div class="stat-card"><div class="num">${allFeedback.length}</div><div class="lbl">Feedback items</div></div>
+                <div class="stat-card"><div class="num">${100 - data.signups.length}</div><div class="lbl">Codes over</div></div>
+            `;
+
+            document.getElementById('signupBody').innerHTML = data.signups.map((s, i) => `
+                <tr>
+                    <td>Betatester${String(i+1).padStart(2,'0')}</td>
+                    <td>${escapeHtml(s.firstName)} ${escapeHtml(s.lastName)}</td>
+                    <td>${escapeHtml(s.company)}</td>
+                    <td>${escapeHtml(s.email)}</td>
+                    <td style="font-family:monospace;font-size:0.75rem;">${s.code}</td>
+                    <td>${new Date(s.date).toLocaleDateString('nl-NL')}</td>
+                </tr>
+            `).join('');
+        } catch (e) {}
+    }
+
+    async function submitFeedback(e) {
+        e.preventDefault();
+        const tool = document.getElementById('fbTool').value;
+        const category = document.getElementById('fbCategory').value;
+        const message = document.getElementById('fbMessage').value.trim();
+        if (!tool || !message) return alert('Selecteer een tool en vul een bericht in.');
+
+        const res = await fetch('/.netlify/functions/portal-feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+            body: JSON.stringify({ tool, category, message })
+        });
+        if (res.ok) {
+            document.getElementById('fbMessage').value = '';
+            document.getElementById('fbTool').value = '';
+            loadFeedback();
+        }
+    }
+
+    async function submitReply(feedbackId) {
+        const input = document.getElementById('reply-' + feedbackId);
+        const message = input.value.trim();
+        if (!message) return;
+
+        const res = await fetch('/.netlify/functions/portal-feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+            body: JSON.stringify({ replyTo: feedbackId, message })
+        });
+        if (res.ok) { input.value = ''; loadFeedback(); }
+    }
+
+    function showTab(name) {
+        document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+        document.getElementById('tab-' + name).classList.remove('hidden');
+        document.querySelectorAll('.portal-tab').forEach(el => el.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    function logout() {
+        localStorage.removeItem('portal_token');
+        localStorage.removeItem('portal_role');
+        localStorage.removeItem('portal_name');
+        localStorage.removeItem('portal_tag');
+        window.location.href = 'portal.html';
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text || '';
+        return div.innerHTML;
+    }
+    </script>
+</body>
+</html>

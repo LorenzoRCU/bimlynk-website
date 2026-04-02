@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beta Portaal | BIM LYNK</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .portal-bg { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--teal-dark), var(--teal)); padding: 20px; }
+        .login-card { background: white; border-radius: 16px; padding: 40px; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+        .login-card img { height: 48px; margin: 0 auto 8px; display: block; }
+        .login-card h1 { text-align: center; font-size: 1.3rem; margin-bottom: 4px; }
+        .login-card .sub { text-align: center; color: var(--gray-mid); font-size: 0.85rem; margin-bottom: 28px; }
+        .login-card .form-group { margin-bottom: 16px; }
+        .login-card label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+        .login-card input { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: var(--font-body); box-sizing: border-box; }
+        .login-card input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(32,67,62,0.1); }
+        .login-card .btn { width: 100%; justify-content: center; margin-top: 8px; }
+        .login-error { display: none; background: rgba(255,59,48,0.1); color: #FF3B30; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 16px; }
+        .login-help { text-align: center; margin-top: 20px; font-size: 0.8rem; color: var(--gray-mid); }
+        .login-help a { color: var(--teal); }
+        @media (max-width: 480px) { .login-card { padding: 28px 20px; } }
+    </style>
+</head>
+<body>
+    <div class="portal-bg">
+        <div class="login-card">
+            <img src="img/logo.png" alt="BIM LYNK">
+            <h1>Beta Portaal</h1>
+            <p class="sub">Log in met je e-mail en activatiecode</p>
+
+            <div class="login-error" id="loginError"></div>
+
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>E-mailadres</label>
+                    <input type="email" id="email" required placeholder="uw@email.nl" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label>Wachtwoord / Activatiecode</label>
+                    <input type="password" id="password" required placeholder="LYNK-XXXX-XXXX" autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn btn-teal" id="loginBtn">Inloggen</button>
+            </form>
+
+            <div class="login-help">
+                <p>Beta testers loggen in met hun e-mail en activatiecode.</p>
+                <p>Nog geen code? <a href="beta-signup.html">Meld je aan</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Check if already logged in
+    const existingToken = localStorage.getItem('portal_token');
+    if (existingToken) {
+        fetch('/.netlify/functions/portal-auth', { headers: { 'Authorization': 'Bearer ' + existingToken } })
+            .then(r => r.json())
+            .then(d => { if (d.valid) window.location.href = 'portal-dashboard.html'; });
+    }
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        const btn = document.getElementById('loginBtn');
+        const err = document.getElementById('loginError');
+        err.style.display = 'none';
+        btn.disabled = true;
+        btn.textContent = 'Bezig...';
+
+        try {
+            const res = await fetch('/.netlify/functions/portal-auth', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: document.getElementById('email').value.trim(),
+                    password: document.getElementById('password').value.trim()
+                })
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                err.textContent = data.error;
+                err.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Inloggen';
+                return;
+            }
+
+            localStorage.setItem('portal_token', data.token);
+            localStorage.setItem('portal_role', data.role);
+            localStorage.setItem('portal_name', data.name);
+            localStorage.setItem('portal_tag', data.testerTag || 'Admin');
+            window.location.href = 'portal-dashboard.html';
+        } catch (error) {
+            err.textContent = 'Verbindingsfout. Probeer het later opnieuw.';
+            err.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Inloggen';
+        }
+    }
+    </script>
+</body>
+</html>
