@@ -8,9 +8,5 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "@netlify/blobs": "^10.7.4",
-    "nodemailer": "^8.0.4"
-  }
+  "license": "ISC"
 }

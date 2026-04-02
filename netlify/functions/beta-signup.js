@@ -1,6 +1,3 @@
-const nodemailer = require('nodemailer');
-const https = require('https');
-
 const BETA_CODES = [
   'LYNK-H3GS-A6LS','LYNK-ELY1-OS2S','LYNK-KOSH-8XGL','LYNK-YCSH-8ZVF','LYNK-2JRH-LL6W',
   'LYNK-7PMB-QN4T','LYNK-XF9A-D3KE','LYNK-V8WC-M2HJ','LYNK-4RYP-S6NB','LYNK-GAHT-W5QL',
@@ -27,60 +24,95 @@ const BETA_CODES = [
 const BETA_START = new Date('2026-04-07');
 const BETA_END = '14 juli 2026';
 
-// Simple in-memory tracking via Netlify env var BETA_SIGNUPS (JSON string)
-// We read/write via Netlify API to persist between invocations
+async function getAccessToken() {
+  const url = `https://login.microsoftonline.com/${process.env.AZURE_TENANT_ID}/oauth2/v2.0/token`;
+  const params = new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: process.env.AZURE_CLIENT_ID,
+    client_secret: process.env.AZURE_CLIENT_SECRET,
+    scope: 'https://graph.microsoft.com/.default'
+  });
 
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString()
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Token failed: ${res.status} ${err}`);
+  }
+
+  const data = await res.json();
+  return data.access_token;
+}
+
+async function sendEmail(token, to, subject, htmlBody) {
+  const sender = process.env.SENDER_EMAIL;
+  const res = await fetch(`https://graph.microsoft.com/v1.0/users/${sender}/sendMail`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      message: {
+        subject,
+        body: { contentType: 'HTML', content: htmlBody },
+        toRecipients: [{ emailAddress: { address: to } }]
+      },
+      saveToSentItems: true
+    })
+  });
+
+  if (res.status !== 202) {
+    const err = await res.text();
+    throw new Error(`SendMail failed: ${res.status} ${err}`);
+  }
+}
+
+// Simple persistent storage via Netlify env var
 async function getSignups() {
   try {
     const siteId = process.env.MY_SITE_ID;
     const token = process.env.NETLIFY_API_TOKEN;
     if (!token || !siteId) return JSON.parse(process.env.BETA_SIGNUPS || '[]');
 
-    return new Promise((resolve) => {
-      https.get(`https://api.netlify.com/api/v1/sites/${siteId}/env/BETA_SIGNUPS`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      }, (res) => {
-        let data = '';
-        res.on('data', c => data += c);
-        res.on('end', () => {
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.values && parsed.values[0]) {
-              resolve(JSON.parse(parsed.values[0].value));
-            } else {
-              resolve([]);
-            }
-          } catch { resolve([]); }
-        });
-      }).on('error', () => resolve([]));
+    const res = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/env/BETA_SIGNUPS`, {
+      headers: { 'Authorization': `Bearer ${token}` }
     });
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (data.values && data.values[0]) return JSON.parse(data.values[0].value);
+    return [];
   } catch { return []; }
 }
 
-async function saveSignup(signups) {
+async function saveSignups(signups) {
   const siteId = process.env.MY_SITE_ID;
   const token = process.env.NETLIFY_API_TOKEN;
   if (!token || !siteId) return;
 
-  const body = JSON.stringify({ key: 'BETA_SIGNUPS', values: [{ value: JSON.stringify(signups), context: 'all' }] });
-
-  return new Promise((resolve) => {
-    const req = https.request(`https://api.netlify.com/api/v1/sites/${siteId}/env/BETA_SIGNUPS`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body)
-      }
-    }, (res) => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => resolve(data));
-    });
-    req.on('error', () => resolve(null));
-    req.write(body);
-    req.end();
+  // Try PATCH first (update existing), fall back to POST (create new)
+  const body = JSON.stringify({
+    key: 'BETA_SIGNUPS',
+    values: [{ value: JSON.stringify(signups), context: 'all' }]
   });
+
+  let res = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/env/BETA_SIGNUPS`, {
+    method: 'PATCH',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body
+  });
+
+  if (!res.ok) {
+    res = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/env`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify([{ key: 'BETA_SIGNUPS', values: [{ value: JSON.stringify(signups), context: 'all' }] }])
+    });
+  }
 }
 
 exports.handler = async (event) => {
@@ -104,7 +136,6 @@ exports.handler = async (event) => {
   try {
     const signups = await getSignups();
 
-    // Check duplicate
     if (signups.find(s => s.email.toLowerCase() === email.toLowerCase())) {
       return { statusCode: 409, headers, body: JSON.stringify({ error: 'Dit e-mailadres is al aangemeld.' }) };
     }
@@ -117,47 +148,36 @@ exports.handler = async (event) => {
     const now = new Date();
     const isBetaLive = now >= BETA_START;
 
-    // Save
     signups.push({ firstName, lastName, company, email, role, revitVersion, code, date: now.toISOString() });
-    await saveSignup(signups);
+    await saveSignups(signups);
 
-    // Send email
     let emailSent = false;
     try {
-      const transporter = nodemailer.createTransport({
-        host: 'smtp.office365.com',
-        port: 587,
-        secure: false,
-        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-      });
-
-      await transporter.sendMail({
-        from: '"BIM LYNK" <' + process.env.SMTP_USER + '>',
-        to: email,
-        subject: isBetaLive ? 'Uw Fill Rate Light NL Beta activatiecode' : 'Aanmelding bevestigd - Fill Rate Light NL Beta',
-        html: isBetaLive ? getBetaLiveEmail(firstName, code) : getPreBetaEmail(firstName, code)
-      });
+      const token = await getAccessToken();
+      const subject = isBetaLive ? 'Uw Fill Rate Light NL Beta activatiecode' : 'Aanmelding bevestigd - Fill Rate Light NL Beta';
+      const html = isBetaLive ? getBetaLiveEmail(firstName, code) : getPreBetaEmail(firstName, code);
+      await sendEmail(token, email, subject, html);
       emailSent = true;
     } catch (mailErr) {
-      console.error('SMTP error:', mailErr.message);
+      console.error('Graph mail error:', mailErr.message);
     }
 
     return {
       statusCode: 200, headers,
-      body: JSON.stringify({ success: true, isBetaLive, emailSent,
+      body: JSON.stringify({
+        success: true, isBetaLive, emailSent,
         message: emailSent
           ? (isBetaLive ? 'Uw activatiecode is verzonden per e-mail.' : 'Aanmelding ontvangen. U ontvangt uw code op 7 april.')
           : 'Aanmelding opgeslagen. De bevestigingsmail wordt zo snel mogelijk verstuurd.'
       })
     };
-
   } catch (error) {
     console.error('Error:', error.message);
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'Er is een fout opgetreden: ' + error.message }) };
   }
 };
 
-function getPreBetaEmail(firstName, code) {
+function getPreBetaEmail(firstName) {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F2F2F7;padding:40px 20px;">
 <div style="max-width:560px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;">
