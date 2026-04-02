@@ -1,7 +1,6 @@
 const nodemailer = require('nodemailer');
 const { getStore } = require('@netlify/blobs');
 
-// 100 beta codes
 const BETA_CODES = [
   'LYNK-H3GS-A6LS','LYNK-ELY1-OS2S','LYNK-KOSH-8XGL','LYNK-YCSH-8ZVF','LYNK-2JRH-LL6W',
   'LYNK-7PMB-QN4T','LYNK-XF9A-D3KE','LYNK-V8WC-M2HJ','LYNK-4RYP-S6NB','LYNK-GAHT-W5QL',
@@ -28,100 +27,106 @@ const BETA_CODES = [
 const BETA_START = new Date('2026-04-07');
 const BETA_END = '14 juli 2026';
 
-exports.handler = async (event) => {
-  // Only POST
+exports.handler = async (event, context) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
+
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
+
+  let data;
+  try {
+    data = JSON.parse(event.body);
+  } catch (e) {
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Ongeldige data.' }) };
+  }
+
+  const { firstName, lastName, company, email, role, revitVersion } = data;
+
+  if (!firstName || !lastName || !company || !email) {
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Vul alle verplichte velden in.' }) };
   }
 
   try {
-    const data = JSON.parse(event.body);
-    const { firstName, lastName, company, email, role, revitVersion } = data;
+    // Get blob store
+    const store = getStore({ name: 'beta-codes', siteID: context.site.id, token: context.token });
 
-    // Validation
-    if (!firstName || !lastName || !company || !email) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Vul alle verplichte velden in.' })
-      };
+    // Check duplicate
+    let existing = null;
+    try {
+      existing = await store.get(email.toLowerCase());
+    } catch (e) {
+      // Key not found is fine
     }
 
-    // Get the store for tracking assignments
-    const store = getStore('beta-codes');
-
-    // Check duplicate email
-    const existingAssignment = await store.get(email.toLowerCase());
-    if (existingAssignment) {
-      return {
-        statusCode: 409,
-        body: JSON.stringify({ error: 'Dit e-mailadres is al aangemeld. U kunt slechts een keer deelnemen.' })
-      };
+    if (existing) {
+      return { statusCode: 409, headers, body: JSON.stringify({ error: 'Dit e-mailadres is al aangemeld.' }) };
     }
 
-    // Get assignment counter
-    let counterData = await store.get('_counter');
-    let counter = counterData ? parseInt(counterData) : 0;
+    // Get counter
+    let counter = 0;
+    try {
+      const counterVal = await store.get('_counter');
+      if (counterVal) counter = parseInt(counterVal);
+    } catch (e) {
+      // First signup
+    }
 
-    // Check capacity
     if (counter >= BETA_CODES.length) {
-      return {
-        statusCode: 410,
-        body: JSON.stringify({ error: 'Het maximale aantal beta testers (100) is bereikt.' })
-      };
+      return { statusCode: 410, headers, body: JSON.stringify({ error: 'Het maximale aantal beta testers (100) is bereikt.' }) };
     }
 
-    // Assign code
     const code = BETA_CODES[counter];
     const now = new Date();
     const isBetaLive = now >= BETA_START;
 
     // Save assignment
     await store.set(email.toLowerCase(), JSON.stringify({
-      code,
-      firstName,
-      lastName,
-      company,
-      email,
-      role,
-      revitVersion,
+      code, firstName, lastName, company, email, role, revitVersion,
       assignedDate: now.toISOString()
     }));
-
-    // Increment counter
     await store.set('_counter', String(counter + 1));
 
     // Send email
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.office365.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER, // info@bimlynk.com
-        pass: process.env.SMTP_PASS  // app password or regular password
-      },
-      tls: { ciphers: 'SSLv3' }
-    });
+    let emailSent = false;
+    try {
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.office365.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        }
+      });
 
-    const emailSubject = isBetaLive
-      ? 'Uw Fill Rate Light NL Beta activatiecode'
-      : 'Aanmelding bevestigd - Fill Rate Light NL Beta';
-
-    const emailHtml = isBetaLive
-      ? getBetaLiveEmail(firstName, code)
-      : getPreBetaEmail(firstName, code);
-
-    await transporter.sendMail({
-      from: '"BIM LYNK" <info@bimlynk.com>',
-      to: email,
-      subject: emailSubject,
-      html: emailHtml
-    });
+      await transporter.sendMail({
+        from: '"BIM LYNK" <' + process.env.SMTP_USER + '>',
+        to: email,
+        subject: isBetaLive ? 'Uw Fill Rate Light NL Beta activatiecode' : 'Aanmelding bevestigd - Fill Rate Light NL Beta',
+        html: isBetaLive ? getBetaLiveEmail(firstName, code) : getPreBetaEmail(firstName, code)
+      });
+      emailSent = true;
+    } catch (mailErr) {
+      console.error('SMTP error:', mailErr.message);
+      // Signup is saved, email failed - we can resend later
+    }
 
     return {
       statusCode: 200,
+      headers,
       body: JSON.stringify({
         success: true,
         isBetaLive,
+        emailSent,
         message: isBetaLive
           ? 'Uw activatiecode is verzonden per e-mail.'
           : 'Aanmelding ontvangen. U ontvangt uw code op 7 april.'
@@ -129,82 +134,69 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
-    console.error('Beta signup error:', error);
+    console.error('Function error:', error.message, error.stack);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Er is een fout opgetreden. Probeer het later opnieuw.' })
+      headers,
+      body: JSON.stringify({ error: 'Er is een fout opgetreden: ' + error.message })
     };
   }
 };
 
-// Email template: voor 7 april (bevestiging, code komt later)
 function getPreBetaEmail(firstName, code) {
-  return `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F2F2F7; padding: 40px 20px;">
-  <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden;">
-    <div style="background: #20433e; padding: 32px; text-align: center;">
-      <h1 style="color: white; margin: 0; font-size: 24px;">BIM LYNK</h1>
-      <p style="color: rgba(255,255,255,0.7); margin: 8px 0 0; font-size: 14px;">Voor (BIM-)Engineers, door BIM-Engineers</p>
-    </div>
-    <div style="padding: 32px;">
-      <h2 style="color: #1C1C1E; margin: 0 0 16px;">Hallo ${firstName},</h2>
-      <p style="color: #3C3C43; line-height: 1.7;">Bedankt voor je aanmelding voor de <strong>Fill Rate Light NL Beta</strong>!</p>
-      <p style="color: #3C3C43; line-height: 1.7;">De beta start op <strong>7 april 2026</strong>. Op die datum ontvang je automatisch een e-mail met je persoonlijke activatiecode en downloadlink.</p>
-      <div style="background: #E8F0EE; border-radius: 8px; padding: 20px; margin: 24px 0;">
-        <p style="margin: 0; color: #20433e; font-weight: 600;">Je persoonlijke code is gereserveerd</p>
-        <p style="margin: 8px 0 0; color: #3C3C43; font-size: 14px;">Tot 7 april hoef je niets te doen. Wij sturen je alles wat je nodig hebt.</p>
-      </div>
-      <p style="color: #3C3C43; line-height: 1.7;">De beta loopt van 7 april tot 13 juli 2026. De beta tester met de meest waardevolle feedback maakt kans op een <strong>lifetime license</strong> voor LYNK Electrical!</p>
-      <p style="color: #8E8E93; font-size: 13px; margin-top: 32px;">Vragen? Mail naar <a href="mailto:info@bimlynk.com" style="color: #20433e;">info@bimlynk.com</a></p>
-    </div>
-    <div style="background: #F2F2F7; padding: 20px; text-align: center;">
-      <p style="color: #8E8E93; font-size: 12px; margin: 0;">&copy; 2026 BIM LYNK - onderdeel van CVL Solutions</p>
-    </div>
-  </div>
-</body>
-</html>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F2F2F7;padding:40px 20px;">
+<div style="max-width:560px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;">
+<div style="background:#20433e;padding:32px;text-align:center;">
+<h1 style="color:white;margin:0;font-size:24px;">BIM LYNK</h1>
+<p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">Voor (BIM-)Engineers, door BIM-Engineers</p>
+</div>
+<div style="padding:32px;">
+<h2 style="color:#1C1C1E;margin:0 0 16px;">Hallo ${firstName},</h2>
+<p style="color:#3C3C43;line-height:1.7;">Bedankt voor je aanmelding voor de <strong>Fill Rate Light NL Beta</strong>!</p>
+<p style="color:#3C3C43;line-height:1.7;">De beta start op <strong>7 april 2026</strong>. Op die datum ontvang je automatisch een e-mail met je persoonlijke activatiecode en downloadlink.</p>
+<div style="background:#E8F0EE;border-radius:8px;padding:20px;margin:24px 0;">
+<p style="margin:0;color:#20433e;font-weight:600;">Je persoonlijke code is gereserveerd</p>
+<p style="margin:8px 0 0;color:#3C3C43;font-size:14px;">Tot 7 april hoef je niets te doen. Wij sturen je alles wat je nodig hebt.</p>
+</div>
+<p style="color:#3C3C43;line-height:1.7;">De beta tester met de meest waardevolle feedback maakt kans op een <strong>lifetime license</strong> voor LYNK Electrical!</p>
+<p style="color:#8E8E93;font-size:13px;margin-top:32px;">Vragen? Mail naar <a href="mailto:info@bimlynk.com" style="color:#20433e;">info@bimlynk.com</a>. Reactie binnen twee werkdagen.</p>
+</div>
+<div style="background:#F2F2F7;padding:20px;text-align:center;">
+<p style="color:#8E8E93;font-size:12px;margin:0;">&copy; 2026 BIM LYNK - onderdeel van CVL Solutions</p>
+</div></div></body></html>`;
 }
 
-// Email template: vanaf 7 april (code direct meesturen)
 function getBetaLiveEmail(firstName, code) {
-  return `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"></head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F2F2F7; padding: 40px 20px;">
-  <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden;">
-    <div style="background: #20433e; padding: 32px; text-align: center;">
-      <h1 style="color: white; margin: 0; font-size: 24px;">BIM LYNK</h1>
-      <p style="color: rgba(255,255,255,0.7); margin: 8px 0 0; font-size: 14px;">Voor (BIM-)Engineers, door BIM-Engineers</p>
-    </div>
-    <div style="padding: 32px;">
-      <h2 style="color: #1C1C1E; margin: 0 0 16px;">Welkom bij de Beta, ${firstName}!</h2>
-      <p style="color: #3C3C43; line-height: 1.7;">Bedankt voor je aanmelding. Hieronder vind je je persoonlijke activatiecode voor <strong>Fill Rate Light NL</strong>.</p>
-      <div style="background: #20433e; border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center;">
-        <p style="color: rgba(255,255,255,0.7); font-size: 13px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: 1px;">Je activatiecode</p>
-        <p style="color: white; font-size: 32px; font-weight: 700; margin: 0; letter-spacing: 3px; font-family: 'Courier New', monospace;">${code}</p>
-        <p style="color: rgba(255,255,255,0.5); font-size: 12px; margin: 12px 0 0;">Geldig tot ${BETA_END}</p>
-      </div>
-      <h3 style="color: #1C1C1E; margin: 24px 0 12px;">Aan de slag</h3>
-      <ol style="color: #3C3C43; line-height: 2; padding-left: 20px;">
-        <li>Download Fill Rate Light NL (link volgt separaat)</li>
-        <li>Installeer de tool in Revit (2023, 2024, 2025 of 2026)</li>
-        <li>Voer bovenstaande activatiecode in bij het eerste gebruik</li>
-        <li>Start met vulgraadberekeningen!</li>
-      </ol>
-      <div style="background: #E8F0EE; border-radius: 8px; padding: 20px; margin: 24px 0;">
-        <p style="margin: 0; color: #20433e; font-weight: 600;">Lifetime license kans</p>
-        <p style="margin: 8px 0 0; color: #3C3C43; font-size: 14px;">De beta tester met de meest waardevolle feedback maakt kans op een lifetime license voor LYNK Electrical. Deel je feedback via <a href="mailto:info@bimlynk.com" style="color: #20433e;">info@bimlynk.com</a>.</p>
-      </div>
-      <p style="color: #8E8E93; font-size: 13px; margin-top: 32px;">Reactie binnen twee werkdagen. Mail naar <a href="mailto:info@bimlynk.com" style="color: #20433e;">info@bimlynk.com</a></p>
-    </div>
-    <div style="background: #F2F2F7; padding: 20px; text-align: center;">
-      <p style="color: #8E8E93; font-size: 12px; margin: 0;">&copy; 2026 BIM LYNK - onderdeel van CVL Solutions</p>
-    </div>
-  </div>
-</body>
-</html>`;
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F2F2F7;padding:40px 20px;">
+<div style="max-width:560px;margin:0 auto;background:white;border-radius:12px;overflow:hidden;">
+<div style="background:#20433e;padding:32px;text-align:center;">
+<h1 style="color:white;margin:0;font-size:24px;">BIM LYNK</h1>
+<p style="color:rgba(255,255,255,0.7);margin:8px 0 0;font-size:14px;">Voor (BIM-)Engineers, door BIM-Engineers</p>
+</div>
+<div style="padding:32px;">
+<h2 style="color:#1C1C1E;margin:0 0 16px;">Welkom bij de Beta, ${firstName}!</h2>
+<p style="color:#3C3C43;line-height:1.7;">Bedankt voor je aanmelding. Hieronder vind je je persoonlijke activatiecode voor <strong>Fill Rate Light NL</strong>.</p>
+<div style="background:#20433e;border-radius:12px;padding:24px;margin:24px 0;text-align:center;">
+<p style="color:rgba(255,255,255,0.7);font-size:13px;margin:0 0 8px;text-transform:uppercase;letter-spacing:1px;">Je activatiecode</p>
+<p style="color:white;font-size:32px;font-weight:700;margin:0;letter-spacing:3px;font-family:'Courier New',monospace;">${code}</p>
+<p style="color:rgba(255,255,255,0.5);font-size:12px;margin:12px 0 0;">Geldig tot ${BETA_END}</p>
+</div>
+<h3 style="color:#1C1C1E;margin:24px 0 12px;">Aan de slag</h3>
+<ol style="color:#3C3C43;line-height:2;padding-left:20px;">
+<li>Download Fill Rate Light NL (link volgt separaat)</li>
+<li>Installeer de tool in Revit (2023, 2024, 2025 of 2026)</li>
+<li>Voer bovenstaande activatiecode in bij het eerste gebruik</li>
+<li>Start met vulgraadberekeningen!</li>
+</ol>
+<div style="background:#E8F0EE;border-radius:8px;padding:20px;margin:24px 0;">
+<p style="margin:0;color:#20433e;font-weight:600;">Lifetime license kans</p>
+<p style="margin:8px 0 0;color:#3C3C43;font-size:14px;">De beta tester met de meest waardevolle feedback maakt kans op een lifetime license voor LYNK Electrical!</p>
+</div>
+<p style="color:#8E8E93;font-size:13px;margin-top:32px;">Feedback of vragen? Mail naar <a href="mailto:info@bimlynk.com" style="color:#20433e;">info@bimlynk.com</a>. Reactie binnen twee werkdagen.</p>
+</div>
+<div style="background:#F2F2F7;padding:20px;text-align:center;">
+<p style="color:#8E8E93;font-size:12px;margin:0;">&copy; 2026 BIM LYNK - onderdeel van CVL Solutions</p>
+</div></div></body></html>`;
 }
