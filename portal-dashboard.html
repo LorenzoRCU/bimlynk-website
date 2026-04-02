@@ -190,7 +190,7 @@
         container.innerHTML = items.map(f => `
             <div class="feedback-item">
                 <div class="meta">
-                    <span><strong>${f.testerTag || 'Onbekend'}</strong></span>
+                    <span><strong>${ROLE === 'admin' && f.firstName ? f.firstName + ' (' + f.testerTag + ')' : f.testerTag || 'Onbekend'}</strong>${ROLE === 'admin' && f.email ? ' <span style="color:var(--gray-mid);font-size:0.7rem;">' + escapeHtml(f.email) + '</span>' : ''}</span>
                     <span class="tool-badge">${f.tool || 'Algemeen'}</span>
                     <span>${f.category || ''}</span>
                     <span>${new Date(f.date).toLocaleDateString('nl-NL')} ${new Date(f.date).toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'})}</span>
