@@ -96,15 +96,15 @@ async function saveSignups(signups) {
   const token = process.env.NETLIFY_API_TOKEN;
   if (!token || !siteId) return;
 
-  const body = JSON.stringify({
-    key: 'BETA_SIGNUPS',
-    values: [{ value: JSON.stringify(signups), context: 'all' }]
-  });
+  const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const base = `https://api.netlify.com/api/v1/accounts/${ACCOUNT_SLUG}/env`;
 
-  await fetch(`https://api.netlify.com/api/v1/accounts/${ACCOUNT_SLUG}/env/BETA_SIGNUPS?site_id=${siteId}`, {
-    method: 'PATCH',
-    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body
+  // Delete existing then recreate with new data
+  await fetch(`${base}/BETA_SIGNUPS?site_id=${siteId}`, { method: 'DELETE', headers });
+  await fetch(`${base}?site_id=${siteId}`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify([{ key: 'BETA_SIGNUPS', values: [{ value: JSON.stringify(signups), context: 'all' }] }])
   });
 }
 
