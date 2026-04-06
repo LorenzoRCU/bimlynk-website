@@ -21,7 +21,7 @@ const BETA_CODES = [
   'LYNK-T5XD-R8HF','LYNK-V8BJ-A3MN','LYNK-J3GK-Y6QL','LYNK-L6HS-D9TW','LYNK-Q9PE-V4XA'
 ];
 
-const BETA_START = new Date('2026-04-07');
+const BETA_START = new Date('2026-04-14');
 const BETA_END = '14 juli 2026';
 
 async function getAccessToken() {
@@ -171,7 +171,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         success: true, isBetaLive, emailSent,
         message: emailSent
-          ? (isBetaLive ? 'Uw activatiecode is verzonden per e-mail.' : 'Aanmelding ontvangen. U ontvangt uw code op 7 april.')
+          ? (isBetaLive ? 'Uw activatiecode is verzonden per e-mail.' : 'Aanmelding ontvangen. U ontvangt uw code op 14 april.')
           : 'Aanmelding opgeslagen. De bevestigingsmail wordt zo snel mogelijk verstuurd.'
       })
     };
@@ -191,10 +191,10 @@ function getPreBetaEmail(firstName) {
 <div style="padding:32px;">
 <h2 style="color:#1C1C1E;margin:0 0 16px;">Hallo ${firstName},</h2>
 <p style="color:#3C3C43;line-height:1.7;">Bedankt voor je aanmelding voor de <strong>Fill Rate Light NL Beta</strong>!</p>
-<p style="color:#3C3C43;line-height:1.7;">De beta start op <strong>7 april 2026</strong>. Op die datum ontvang je automatisch een e-mail met je persoonlijke activatiecode en downloadlink.</p>
+<p style="color:#3C3C43;line-height:1.7;">De beta start op <strong>14 april 2026</strong>. Op die datum ontvang je automatisch een e-mail met je persoonlijke activatiecode en downloadlink.</p>
 <div style="background:#E8F0EE;border-radius:8px;padding:20px;margin:24px 0;">
 <p style="margin:0;color:#20433e;font-weight:600;">Je persoonlijke code is gereserveerd</p>
-<p style="margin:8px 0 0;color:#3C3C43;font-size:14px;">Tot 7 april hoef je niets te doen. Wij sturen je alles wat je nodig hebt.</p></div>
+<p style="margin:8px 0 0;color:#3C3C43;font-size:14px;">Tot 14 april hoef je niets te doen. Wij sturen je alles wat je nodig hebt.</p></div>
 <p style="color:#3C3C43;line-height:1.7;">De beta tester met de meest waardevolle feedback maakt kans op een <strong>lifetime license</strong> voor LYNK Electrical!</p>
 <p style="color:#8E8E93;font-size:13px;margin-top:32px;">Vragen? Mail naar <a href="mailto:info@bimlynk.com" style="color:#20433e;">info@bimlynk.com</a>. Reactie binnen twee werkdagen.</p>
 </div>
