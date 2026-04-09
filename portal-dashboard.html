@@ -74,8 +74,12 @@
 <body>
     <div class="portal-header">
         <div class="portal-header-inner">
-            <a href="index.html" class="logo"><img src="img/logo.png" alt="LYNK"><span class="logo-text">Beta Portaal</span></a>
+            <a href="index.html" class="logo"><img src="img/logo.png" alt="LYNK"><span class="logo-text" id="portalLabel">Beta Portaal</span></a>
             <div class="user-info">
+                <select id="contextSwitcher" class="hidden" onchange="switchContext()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:white;padding:6px 12px;border-radius:6px;font-size:0.85rem;font-family:var(--font-body);cursor:pointer;">
+                    <option value="beta">Beta Portaal (Fill Rate)</option>
+                    <option value="demo">LYNK Electrical Demo</option>
+                </select>
                 <span class="user-tag" id="userTag"></span>
                 <button class="logout-btn" onclick="logout()">Uitloggen</button>
             </div>
@@ -84,11 +88,14 @@
 
     <div class="portal-tabs">
         <div class="portal-tabs-inner">
-            <button class="portal-tab active" onclick="showTab('feedback')">Feedback</button>
-            <button class="portal-tab" onclick="showTab('mijn')" id="tabMijn">Mijn Feedback</button>
-            <button class="portal-tab hidden" onclick="showTab('admin')" id="tabAdmin">Aanmeldingen</button>
-            <button class="portal-tab hidden" onclick="showTab('demos')" id="tabDemos">Demo Aanvragen</button>
-            <button class="portal-tab hidden" onclick="showTab('manuals')" id="tabManuals">Handleidingen</button>
+            <!-- Beta context tabs -->
+            <button class="portal-tab active ctx-beta" onclick="showTab('feedback')">Feedback</button>
+            <button class="portal-tab ctx-beta" onclick="showTab('mijn')" id="tabMijn">Mijn Feedback</button>
+            <button class="portal-tab hidden ctx-beta" onclick="showTab('admin')" id="tabAdmin">Aanmeldingen</button>
+
+            <!-- Demo context tabs (admin only) -->
+            <button class="portal-tab hidden ctx-demo" onclick="showTab('demos')" id="tabDemos">Demo Aanvragen</button>
+            <button class="portal-tab hidden ctx-demo" onclick="showTab('manuals')" id="tabManuals">Handleidingen</button>
         </div>
     </div>
 
@@ -248,6 +255,43 @@
         document.getElementById('tabManuals').classList.remove('hidden');
         document.getElementById('feedbackFormCard').classList.add('hidden');
         document.getElementById('tabMijn').classList.add('hidden');
+        document.getElementById('contextSwitcher').classList.remove('hidden');
+
+        // Restore last context
+        const savedCtx = localStorage.getItem('admin_context') || 'beta';
+        document.getElementById('contextSwitcher').value = savedCtx;
+        switchContext();
+    }
+
+    function switchContext() {
+        const ctx = document.getElementById('contextSwitcher').value;
+        localStorage.setItem('admin_context', ctx);
+
+        // Update header label
+        document.getElementById('portalLabel').textContent =
+            ctx === 'demo' ? 'LYNK Electrical Demo Portaal' : 'Beta Portaal';
+
+        // Show/hide tabs based on context
+        document.querySelectorAll('.ctx-beta').forEach(el => {
+            el.style.display = ctx === 'beta' ? '' : 'none';
+        });
+        document.querySelectorAll('.ctx-demo').forEach(el => {
+            el.style.display = ctx === 'demo' ? '' : 'none';
+        });
+
+        // Hide all content tabs
+        document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.portal-tab').forEach(el => el.classList.remove('active'));
+
+        // Show first tab of the active context
+        if (ctx === 'beta') {
+            document.getElementById('tab-feedback').classList.remove('hidden');
+            document.querySelector('.ctx-beta').classList.add('active');
+        } else {
+            document.getElementById('tab-demos').classList.remove('hidden');
+            const firstDemo = document.querySelector('.ctx-demo:not(.hidden)');
+            if (firstDemo) firstDemo.classList.add('active');
+        }
     }
 
     // Load data
