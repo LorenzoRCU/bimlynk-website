@@ -245,6 +245,10 @@
     const TAG = localStorage.getItem('portal_tag');
     let allFeedback = [];
 
+    // Declared upfront to avoid ReferenceError in switchContext
+    let demoSignups = [];
+    let currentDemoSignup = null;
+
     if (!TOKEN) { window.location.href = 'portal.html'; }
 
     // Setup UI
@@ -422,6 +426,17 @@
         document.querySelectorAll('.portal-tab').forEach(el => el.classList.remove('active'));
         const e = evt || (typeof event !== 'undefined' ? event : null);
         if (e && e.target) e.target.classList.add('active');
+
+        // Auto-load data when switching to specific tabs
+        if (name === 'manuals' && typeof loadManual === 'function') {
+            loadManual();
+        }
+        if (name === 'demos' && typeof loadDemoSignups === 'function') {
+            loadDemoSignups();
+        }
+        if (name === 'admin' && typeof loadAdmin === 'function') {
+            loadAdmin();
+        }
     }
 
     function logout() {
@@ -637,9 +652,6 @@
     }
 
     // ======================== DEMO SIGNUPS ========================
-
-    let demoSignups = [];
-    let currentDemoSignup = null;
 
     async function loadDemoSignups() {
         try {
