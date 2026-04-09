@@ -89,13 +89,13 @@
     <div class="portal-tabs">
         <div class="portal-tabs-inner">
             <!-- Beta context tabs -->
-            <button class="portal-tab active ctx-beta" onclick="showTab('feedback')">Feedback</button>
-            <button class="portal-tab ctx-beta" onclick="showTab('mijn')" id="tabMijn">Mijn Feedback</button>
-            <button class="portal-tab hidden ctx-beta" onclick="showTab('admin')" id="tabAdmin">Aanmeldingen</button>
+            <button class="portal-tab active ctx-beta" onclick="showTab('feedback', event)">Feedback</button>
+            <button class="portal-tab ctx-beta" onclick="showTab('mijn', event)" id="tabMijn">Mijn Feedback</button>
+            <button class="portal-tab hidden ctx-beta" onclick="showTab('admin', event)" id="tabAdmin">Aanmeldingen</button>
 
             <!-- Demo context tabs (admin only) -->
-            <button class="portal-tab hidden ctx-demo" onclick="showTab('demos')" id="tabDemos">Demo Aanvragen</button>
-            <button class="portal-tab hidden ctx-demo" onclick="showTab('manuals')" id="tabManuals">Handleidingen</button>
+            <button class="portal-tab hidden ctx-demo" onclick="showTab('demos', event)" id="tabDemos">Demo Aanvragen</button>
+            <button class="portal-tab hidden ctx-demo" onclick="showTab('manuals', event)" id="tabManuals">Handleidingen</button>
         </div>
     </div>
 
@@ -409,11 +409,19 @@
         if (res.ok) { input.value = ''; loadFeedback(); }
     }
 
-    function showTab(name) {
-        document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.add('hidden'));
-        document.getElementById('tab-' + name).classList.remove('hidden');
+    function showTab(name, evt) {
+        // Hide all content panels (only divs with id starting with "tab-")
+        ['feedback', 'mijn', 'admin', 'demos', 'manuals'].forEach(n => {
+            const el = document.getElementById('tab-' + n);
+            if (el) el.classList.add('hidden');
+        });
+        const target = document.getElementById('tab-' + name);
+        if (target) target.classList.remove('hidden');
+
+        // Update active state on tab buttons
         document.querySelectorAll('.portal-tab').forEach(el => el.classList.remove('active'));
-        event.target.classList.add('active');
+        const e = evt || (typeof event !== 'undefined' ? event : null);
+        if (e && e.target) e.target.classList.add('active');
     }
 
     function logout() {
@@ -500,6 +508,11 @@
         const content = document.getElementById('manualContent').value;
 
         if (!content.trim()) { alert('Vul eerst inhoud in.'); return; }
+
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+            alert('PDF library niet geladen. Vernieuw de pagina (Ctrl+F5).');
+            return;
+        }
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ unit: 'mm', format: 'a4' });
