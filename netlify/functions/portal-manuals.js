@@ -1,5 +1,4 @@
-const fs = require('fs');
-const path = require('path');
+const DEFAULT_MANUALS = require('./default_manuals_data');
 
 const ACCOUNT_SLUG = 'LorenzoRCU';
 
@@ -45,21 +44,6 @@ const VALID_TOOLS = [
   'cable_tray_id',
   'fill_rate'
 ];
-
-// Load default manuals from file (used as fallback when env var doesn't exist yet)
-function loadDefaultManuals() {
-  try {
-    const file = path.join(__dirname, '_data', 'default_manuals.json');
-    if (fs.existsSync(file)) {
-      return JSON.parse(fs.readFileSync(file, 'utf8'));
-    }
-  } catch (e) {
-    console.error('Failed to load default manuals:', e.message);
-  }
-  return {};
-}
-
-const DEFAULT_MANUALS = loadDefaultManuals();
 
 // Per-tool env var key (each under 5000 char limit)
 function envKey(tool) {
