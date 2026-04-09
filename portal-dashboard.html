@@ -123,6 +123,41 @@
                 </form>
             </div>
 
+            <!-- Admin: Feedback namens beta tester plaatsen -->
+            <div class="card hidden" id="adminProxyFeedbackCard" style="border: 2px solid var(--teal); background: var(--teal-bg);">
+                <h3 style="color: var(--teal); display: flex; align-items: center; gap: 8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Feedback namens beta tester plaatsen
+                </h3>
+                <p style="font-size: 0.85rem; color: var(--gray-dark); margin: 6px 0 16px;">
+                    Heeft een tester feedback via e-mail, WhatsApp of telefoon gegeven? Plaats het hier namens hen. De tester krijgt automatisch een e-mail dat de feedback is geregistreerd.
+                </p>
+                <form class="feedback-form" onsubmit="submitProxyFeedback(event)">
+                    <label style="display:block; font-size: 0.85rem; font-weight: 600; color: var(--teal); margin-bottom: 4px;">Selecteer beta tester <span style="color: #FF3B30;">*</span></label>
+                    <select id="proxyTester" required style="margin-bottom: 12px;">
+                        <option value="">-- Kies een tester --</option>
+                    </select>
+                    <label style="display:block; font-size: 0.85rem; font-weight: 600; color: var(--teal); margin-bottom: 4px;">Tool <span style="color: #FF3B30;">*</span></label>
+                    <select id="proxyTool" required>
+                        <option value="">Selecteer tool</option>
+                        <option value="Fill Rate Light NL">Fill Rate Light NL</option>
+                        <option value="Cable Tray Clearance">Cable Tray Clearance Generator</option>
+                        <option value="Cable Tray Support">Cable Tray Support Generator</option>
+                        <option value="Algemeen">Algemeen / Overig</option>
+                    </select>
+                    <label style="display:block; font-size: 0.85rem; font-weight: 600; color: var(--teal); margin-bottom: 4px;">Categorie</label>
+                    <select id="proxyCategory">
+                        <option value="Feedback">Feedback</option>
+                        <option value="Bug">Bug melding</option>
+                        <option value="Feature">Feature verzoek</option>
+                        <option value="Vraag">Vraag</option>
+                    </select>
+                    <label style="display:block; font-size: 0.85rem; font-weight: 600; color: var(--teal); margin-bottom: 4px;">Bericht (namens tester) <span style="color: #FF3B30;">*</span></label>
+                    <textarea id="proxyMessage" placeholder="Tester heeft via WhatsApp gemeld: ..." required></textarea>
+                    <button type="submit" class="btn btn-teal" style="width:100%;justify-content:center;margin-top:8px;">Plaatsen namens tester</button>
+                </form>
+            </div>
+
             <div style="margin: 24px 0 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                 <h3 style="font-size: 1rem; margin: 0;">Feedback</h3>
                 <select id="feedbackFilter" onchange="filterFeedback()" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; font-family: var(--font-body);">
@@ -155,29 +190,50 @@
 
             <!-- Send Demo Modal -->
             <div id="sendDemoModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;padding:20px;">
-                <div style="background:white;border-radius:12px;padding:28px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;">
-                    <h3 style="margin-bottom:8px;">Demo versturen</h3>
-                    <p id="sendDemoTo" style="color:var(--gray-mid);font-size:0.85rem;margin-bottom:16px;"></p>
+                <div style="background:white;border-radius:12px;padding:28px;max-width:580px;width:100%;max-height:90vh;overflow-y:auto;">
+                    <h3 style="margin-bottom:6px;">Demo pakket versturen</h3>
+                    <p id="sendDemoTo" style="color:var(--gray-mid);font-size:0.85rem;margin-bottom:8px;"></p>
+                    <div style="background:#E8F0EE;border-left:3px solid #20433e;padding:10px 12px;border-radius:4px;font-size:0.8rem;color:#1C1C1E;margin-bottom:18px;">
+                        <strong>Volledig pakket</strong> — auto code uit pool · installer .exe · 3 demo families · alle handleidingen ingebouwd in mail · CC naar info@bimlynk.com
+                    </div>
 
-                    <label style="display:block;font-size:0.8rem;color:var(--gray-mid);margin-bottom:4px;">Activatiecode</label>
-                    <input type="text" id="sendDemoCode" placeholder="DEMO-XXXX-XXXX-XXXX" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:Consolas,monospace;font-size:0.95rem;margin-bottom:12px;box-sizing:border-box;">
-                    <p style="font-size:0.75rem;color:var(--gray-mid);margin-top:-8px;margin-bottom:12px;">Pak een code uit demo_codes.json en plak hem hier.</p>
-
-                    <label style="display:block;font-size:0.8rem;color:var(--gray-mid);margin-bottom:4px;">Onderwerp</label>
-                    <input type="text" id="sendDemoSubject" value="Je LYNK Electrical Demo v1.0 staat klaar" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;margin-bottom:12px;box-sizing:border-box;">
+                    <label style="display:block;font-size:0.8rem;color:var(--gray-mid);margin-bottom:4px;">Demo versie</label>
+                    <select id="sendDemoVersion" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;margin-bottom:14px;box-sizing:border-box;font-family:var(--font-body);">
+                        <option value="lynk-electrical-demo-v1.0">LYNK Electrical Demo v1.0</option>
+                    </select>
 
                     <label style="display:block;font-size:0.8rem;color:var(--gray-mid);margin-bottom:4px;">Persoonlijk bericht (optioneel)</label>
-                    <textarea id="sendDemoMessage" rows="3" placeholder="Bijv. Bedankt voor je interesse..." style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;margin-bottom:12px;box-sizing:border-box;font-family:var(--font-body);resize:vertical;"></textarea>
+                    <textarea id="sendDemoMessage" rows="2" placeholder="Bijv. extra notitie voor de aanvrager..." style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;margin-bottom:14px;box-sizing:border-box;font-family:var(--font-body);resize:vertical;"></textarea>
 
-                    <label style="display:block;font-size:0.8rem;color:var(--gray-mid);margin-bottom:4px;">Handleidingen meesturen (PDF, max 4MB per stuk)</label>
-                    <input type="file" id="sendDemoAttachments" multiple accept=".pdf" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;margin-bottom:12px;box-sizing:border-box;">
-                    <p style="font-size:0.75rem;color:var(--gray-mid);margin-top:-8px;margin-bottom:16px;">Gebruik de Handleidingen tab om PDFs te genereren in BIMLYNK huisstijl.</p>
+                    <details style="margin-bottom:14px;">
+                        <summary style="cursor:pointer;font-size:0.8rem;color:var(--gray-mid);user-select:none;">Geavanceerde opties</summary>
+                        <div style="margin-top:10px;padding:12px;background:#FAFAFA;border-radius:8px;">
+                            <label style="display:block;font-size:0.75rem;color:var(--gray-mid);margin-bottom:4px;">Override ontvanger (test naar jezelf)</label>
+                            <input type="email" id="sendDemoRecipient" placeholder="leeg = naar aanvrager + CC info@bimlynk.com" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;margin-bottom:10px;box-sizing:border-box;">
+
+                            <label style="display:block;font-size:0.75rem;color:var(--gray-mid);margin-bottom:4px;">Onderwerp override</label>
+                            <input type="text" id="sendDemoSubject" placeholder="auto" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;margin-bottom:10px;box-sizing:border-box;">
+
+                            <label style="display:block;font-size:0.75rem;color:var(--gray-mid);margin-bottom:4px;">Code override (leeg = auto uit pool)</label>
+                            <input type="text" id="sendDemoCode" placeholder="auto" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-family:Consolas,monospace;font-size:0.85rem;box-sizing:border-box;">
+                        </div>
+                    </details>
+
+                    <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px;">
+                        <label style="display:block;font-size:0.8rem;color:var(--gray-mid);margin-bottom:6px;">📅 Inplannen voor later (optioneel)</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="date" id="sendDemoDate" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;box-sizing:border-box;">
+                            <input type="time" id="sendDemoTime" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:0.85rem;box-sizing:border-box;">
+                            <button type="button" onclick="clearSchedule()" style="padding:6px 10px;background:white;border:1px solid var(--border);border-radius:6px;font-size:0.75rem;cursor:pointer;">Wissen</button>
+                        </div>
+                        <p style="font-size:0.7rem;color:var(--gray-mid);margin-top:4px;">Laat leeg om direct te versturen. De scheduler check elke 5 min op due jobs.</p>
+                    </div>
 
                     <p id="sendDemoStatus" style="font-size:0.85rem;margin-bottom:12px;"></p>
 
-                    <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
                         <button onclick="closeSendDemoModal()" style="padding:10px 20px;background:var(--gray-light);border:1px solid var(--border);border-radius:6px;font-size:0.9rem;cursor:pointer;">Annuleren</button>
-                        <button onclick="confirmSendDemo()" class="btn btn-teal">Verstuur Demo</button>
+                        <button id="sendDemoBtn" onclick="confirmSendDemo()" class="btn btn-teal">Stuur volledig pakket</button>
                     </div>
                 </div>
             </div>
@@ -247,6 +303,8 @@
 
     // Declared upfront to avoid ReferenceError in switchContext
     let demoSignups = [];
+    let demoScheduled = [];
+    let demoCodeStats = null;
     let currentDemoSignup = null;
 
     if (!TOKEN) { window.location.href = 'portal.html'; }
@@ -260,6 +318,8 @@
         document.getElementById('feedbackFormCard').classList.add('hidden');
         document.getElementById('tabMijn').classList.add('hidden');
         document.getElementById('contextSwitcher').classList.remove('hidden');
+        document.getElementById('adminProxyFeedbackCard').classList.remove('hidden');
+        loadProxyTesters();
 
         // Restore last context
         const savedCtx = localStorage.getItem('admin_context') || 'beta';
@@ -327,9 +387,9 @@
         if (!items.length) { container.innerHTML = '<p style="color:var(--gray-mid);padding:20px;">Nog geen feedback geplaatst.</p>'; return; }
 
         container.innerHTML = items.map(f => `
-            <div class="feedback-item">
+            <div class="feedback-item${f.postedByAdmin ? ' admin-posted' : ''}">
                 <div class="meta">
-                    <span><strong>${ROLE === 'admin' && f.firstName ? f.firstName + ' (' + f.testerTag + ')' : f.testerTag || 'Onbekend'}</strong>${ROLE === 'admin' && f.email ? ' <span style="color:var(--gray-mid);font-size:0.7rem;">' + escapeHtml(f.email) + '</span>' : ''}</span>
+                    <span><strong>${ROLE === 'admin' && f.firstName ? f.firstName + ' (' + f.testerTag + ')' : f.testerTag || 'Onbekend'}</strong>${f.postedByAdmin ? ' <span style="background:var(--teal);color:white;font-size:0.65rem;padding:2px 8px;border-radius:10px;font-weight:600;">geplaatst door admin</span>' : ''}${ROLE === 'admin' && f.email ? ' <span style="color:var(--gray-mid);font-size:0.7rem;">' + escapeHtml(f.email) + '</span>' : ''}</span>
                     <span class="tool-badge">${f.tool || 'Algemeen'}</span>
                     <span>${f.category || ''}</span>
                     <span>${new Date(f.date).toLocaleDateString('nl-NL')} ${new Date(f.date).toLocaleTimeString('nl-NL', {hour:'2-digit',minute:'2-digit'})}</span>
@@ -411,6 +471,72 @@
             body: JSON.stringify({ replyTo: feedbackId, message })
         });
         if (res.ok) { input.value = ''; loadFeedback(); }
+    }
+
+    // Admin: load beta testers list for proxy feedback dropdown
+    async function loadProxyTesters() {
+        try {
+            const res = await fetch('/.netlify/functions/portal-auth', {
+                method: 'GET',
+                headers: { 'Authorization': 'Bearer ' + TOKEN }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            const select = document.getElementById('proxyTester');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- Kies een tester --</option>';
+            (data.signups || []).forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.email;
+                opt.textContent = `${s.firstName} ${s.lastName} (${s.company})`;
+                select.appendChild(opt);
+            });
+        } catch (e) {
+            console.error('Kon testers niet laden:', e);
+        }
+    }
+
+    // Admin: submit feedback on behalf of a beta tester
+    async function submitProxyFeedback(e) {
+        e.preventDefault();
+        const onBehalfOf = document.getElementById('proxyTester').value;
+        const tool = document.getElementById('proxyTool').value;
+        const category = document.getElementById('proxyCategory').value;
+        const message = document.getElementById('proxyMessage').value.trim();
+
+        if (!onBehalfOf || !tool || !message) {
+            alert('Vul alle verplichte velden in.');
+            return;
+        }
+
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Bezig met plaatsen...';
+
+        try {
+            const res = await fetch('/.netlify/functions/portal-feedback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+                body: JSON.stringify({ onBehalfOf, tool, category, message })
+            });
+
+            const result = await res.json();
+
+            if (res.ok) {
+                alert(`Feedback geplaatst als ${result.testerTag}. De tester heeft een e-mail ontvangen.`);
+                document.getElementById('proxyMessage').value = '';
+                document.getElementById('proxyTester').value = '';
+                document.getElementById('proxyTool').value = '';
+                loadFeedback();
+            } else {
+                alert(result.error || 'Plaatsen mislukt.');
+            }
+        } catch (err) {
+            alert('Er is een fout opgetreden.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Plaatsen namens tester';
+        }
     }
 
     function showTab(name, evt) {
@@ -531,101 +657,7 @@
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-        const pageW = doc.internal.pageSize.getWidth();
-        const pageH = doc.internal.pageSize.getHeight();
-        const margin = 20;
-        const teal = [32, 67, 62];
-        const grayMid = [142, 142, 147];
-
-        // Header bar
-        doc.setFillColor(teal[0], teal[1], teal[2]);
-        doc.rect(0, 0, pageW, 30, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(18);
-        doc.setFont('helvetica', 'bold');
-        doc.text('BIM LYNK', margin, 18);
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text('LYNK Electrical', margin, 25);
-        doc.setFontSize(9);
-        doc.text('part of CVL SOLUTIONS', pageW - margin, 25, { align: 'right' });
-
-        // Title block
-        let y = 50;
-        doc.setTextColor(teal[0], teal[1], teal[2]);
-        doc.setFontSize(22);
-        doc.setFont('helvetica', 'bold');
-        doc.text(title, margin, y);
-        y += 8;
-        doc.setFontSize(11);
-        doc.setTextColor(grayMid[0], grayMid[1], grayMid[2]);
-        doc.setFont('helvetica', 'normal');
-        doc.text(version + '  •  ' + new Date().toLocaleDateString('nl-NL'), margin, y);
-        y += 12;
-
-        // Divider
-        doc.setDrawColor(teal[0], teal[1], teal[2]);
-        doc.setLineWidth(0.5);
-        doc.line(margin, y, pageW - margin, y);
-        y += 10;
-
-        // Body — simple markdown rendering
-        const lines = content.split('\n');
-        doc.setTextColor(28, 28, 30);
-
-        for (const rawLine of lines) {
-            if (y > pageH - 25) {
-                addFooter(doc, pageW, pageH, margin, teal);
-                doc.addPage();
-                y = margin;
-            }
-
-            const line = rawLine.trimEnd();
-
-            if (line.startsWith('# ')) {
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(16);
-                doc.setTextColor(teal[0], teal[1], teal[2]);
-                doc.text(line.substring(2), margin, y);
-                y += 9;
-                doc.setTextColor(28, 28, 30);
-            } else if (line.startsWith('## ')) {
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(13);
-                doc.setTextColor(teal[0], teal[1], teal[2]);
-                doc.text(line.substring(3), margin, y);
-                y += 7;
-                doc.setTextColor(28, 28, 30);
-            } else if (line.startsWith('### ')) {
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(11);
-                doc.text(line.substring(4), margin, y);
-                y += 6;
-            } else if (line.startsWith('- ') || line.startsWith('* ')) {
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(10);
-                const wrapped = doc.splitTextToSize('• ' + line.substring(2), pageW - 2 * margin - 5);
-                doc.text(wrapped, margin + 5, y);
-                y += wrapped.length * 5;
-            } else if (/^\d+\.\s/.test(line)) {
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(10);
-                const wrapped = doc.splitTextToSize(line, pageW - 2 * margin - 5);
-                doc.text(wrapped, margin + 5, y);
-                y += wrapped.length * 5;
-            } else if (line === '') {
-                y += 4;
-            } else {
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(10);
-                const wrapped = doc.splitTextToSize(line, pageW - 2 * margin);
-                doc.text(wrapped, margin, y);
-                y += wrapped.length * 5;
-            }
-        }
-
-        addFooter(doc, pageW, pageH, margin, teal);
-
+        renderManualToDoc(doc, title, version, content);
         const safeName = title.replace(/[^a-z0-9\-_ ]/gi, '_');
         doc.save(safeName + '_' + version + '.pdf');
     }
@@ -638,7 +670,7 @@
         doc.setTextColor(142, 142, 147);
         doc.setFont('helvetica', 'normal');
         doc.text('© BIM LYNK - part of CVL SOLUTIONS', margin, pageH - 12);
-        doc.text('bimlynk.netlify.app', pageW - margin, pageH - 12, { align: 'right' });
+        doc.text('www.bimlynk.com', pageW - margin, pageH - 12, { align: 'right' });
         const pageNum = doc.internal.getCurrentPageInfo().pageNumber;
         doc.text('Pagina ' + pageNum, pageW / 2, pageH - 12, { align: 'center' });
     }
@@ -664,6 +696,8 @@
             }
             const data = await res.json();
             demoSignups = data.signups || [];
+            demoScheduled = data.scheduled || [];
+            demoCodeStats = data.codeStats || null;
             renderDemoSignups();
         } catch (e) {
             document.getElementById('demoList').innerHTML = '<p style="color:var(--red);">Fout: ' + e.message + '</p>';
@@ -673,14 +707,35 @@
     function renderDemoSignups() {
         const pending = demoSignups.filter(s => s.status === 'pending').length;
         const sent = demoSignups.filter(s => s.status === 'sent').length;
+        const codesLbl = demoCodeStats ? `${demoCodeStats.remaining}/${demoCodeStats.total}` : '—';
         document.getElementById('demoStats').innerHTML = `
             <div class="stat-card"><div class="num">${demoSignups.length}</div><div class="lbl">Totaal</div></div>
             <div class="stat-card"><div class="num">${pending}</div><div class="lbl">In afwachting</div></div>
             <div class="stat-card"><div class="num">${sent}</div><div class="lbl">Verstuurd</div></div>
+            <div class="stat-card"><div class="num">${demoScheduled.length}</div><div class="lbl">Ingepland</div></div>
+            <div class="stat-card"><div class="num">${codesLbl}</div><div class="lbl">Codes vrij</div></div>
         `;
 
+        // Render scheduled jobs panel
+        const schedHtml = demoScheduled.length === 0 ? '' : `
+            <div style="border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px;background:#FFF8E7;">
+                <h4 style="margin:0 0 10px;color:#20433e;font-size:0.95rem;">📅 Ingeplande verzendingen (${demoScheduled.length})</h4>
+                ${demoScheduled.map(j => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed var(--border);font-size:0.85rem;">
+                        <div>
+                            <strong>${escapeHtml(j.signupName)}</strong>
+                            <span style="color:var(--gray-mid);"> · ${escapeHtml(j.signupEmail)}</span>
+                            ${j.recipientOverride ? `<span style="color:#FF9500;"> → ${escapeHtml(j.recipientOverride)}</span>` : ''}
+                            ${j.status === 'failed' ? `<span style="color:var(--red);"> · FOUT: ${escapeHtml(j.error || '')}</span>` : ''}
+                            <div style="font-size:0.75rem;color:var(--gray-mid);">⏰ ${new Date(j.scheduledFor).toLocaleString('nl-NL')}</div>
+                        </div>
+                        <button onclick="cancelScheduledJob('${j.id}')" style="padding:4px 10px;background:white;border:1px solid var(--border);border-radius:4px;font-size:0.75rem;cursor:pointer;">Annuleren</button>
+                    </div>
+                `).join('')}
+            </div>`;
+
         if (demoSignups.length === 0) {
-            document.getElementById('demoList').innerHTML = '<p style="color:var(--gray-mid);padding:20px;">Nog geen demo aanvragen.</p>';
+            document.getElementById('demoList').innerHTML = schedHtml + '<p style="color:var(--gray-mid);padding:20px;">Nog geen demo aanvragen.</p>';
             return;
         }
 
@@ -690,7 +745,7 @@
             return new Date(b.date) - new Date(a.date);
         });
 
-        document.getElementById('demoList').innerHTML = sorted.map(s => `
+        document.getElementById('demoList').innerHTML = schedHtml + sorted.map(s => `
             <div style="border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px;background:${s.status === 'pending' ? '#FFF8DC' : 'white'};">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
                     <div>
@@ -718,10 +773,33 @@
         document.getElementById('sendDemoTo').textContent = `Naar: ${currentDemoSignup.firstName} ${currentDemoSignup.lastName} <${currentDemoSignup.email}>`;
         document.getElementById('sendDemoCode').value = '';
         document.getElementById('sendDemoMessage').value = '';
+        document.getElementById('sendDemoSubject').value = '';
+        document.getElementById('sendDemoRecipient').value = '';
+        document.getElementById('sendDemoDate').value = '';
+        document.getElementById('sendDemoTime').value = '';
         document.getElementById('sendDemoStatus').textContent = '';
-        document.getElementById('sendDemoAttachments').value = '';
         document.getElementById('sendDemoModal').style.display = 'flex';
     }
+
+    function clearSchedule() {
+        document.getElementById('sendDemoDate').value = '';
+        document.getElementById('sendDemoTime').value = '';
+        updateSendButtonLabel();
+    }
+
+    function updateSendButtonLabel() {
+        const date = document.getElementById('sendDemoDate').value;
+        const time = document.getElementById('sendDemoTime').value;
+        const btn = document.getElementById('sendDemoBtn');
+        if (date && time) {
+            btn.textContent = `Inplannen voor ${date} ${time}`;
+        } else {
+            btn.textContent = 'Stuur volledig pakket';
+        }
+    }
+    document.addEventListener('change', e => {
+        if (e.target.id === 'sendDemoDate' || e.target.id === 'sendDemoTime') updateSendButtonLabel();
+    });
 
     function closeSendDemoModal() {
         document.getElementById('sendDemoModal').style.display = 'none';
@@ -730,32 +808,44 @@
 
     async function confirmSendDemo() {
         if (!currentDemoSignup) return;
-        const code = document.getElementById('sendDemoCode').value.trim();
+        const codeRaw = document.getElementById('sendDemoCode').value.trim();
         const subject = document.getElementById('sendDemoSubject').value.trim();
         const message = document.getElementById('sendDemoMessage').value.trim();
-        const files = document.getElementById('sendDemoAttachments').files;
+        const recipientOverride = document.getElementById('sendDemoRecipient').value.trim();
+        const demoVersionId = document.getElementById('sendDemoVersion').value;
+        const dateVal = document.getElementById('sendDemoDate').value;
+        const timeVal = document.getElementById('sendDemoTime').value;
         const status = document.getElementById('sendDemoStatus');
 
-        if (!code || !/^DEMO-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(code)) {
+        if (codeRaw && !/^DEMO-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/i.test(codeRaw)) {
             status.style.color = 'var(--red)';
-            status.textContent = 'Voer een geldige code in (DEMO-XXXX-XXXX-XXXX)';
+            status.textContent = 'Code-formaat klopt niet (DEMO-XXXX-XXXX-XXXX). Laat leeg voor automatische toewijzing.';
             return;
         }
 
-        const attachments = [];
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            if (file.size > 4 * 1024 * 1024) {
+        // Build scheduledFor in local time → ISO
+        let scheduledFor = null;
+        if (dateVal && timeVal) {
+            const local = new Date(`${dateVal}T${timeVal}`);
+            if (isNaN(local.getTime())) {
                 status.style.color = 'var(--red)';
-                status.textContent = `Bestand "${file.name}" is groter dan 4MB.`;
+                status.textContent = 'Ongeldige datum/tijd';
                 return;
             }
-            const base64 = await readFileAsBase64(file);
-            attachments.push({ name: file.name, contentType: file.type || 'application/pdf', contentBase64: base64 });
+            if (local.getTime() < Date.now()) {
+                status.style.color = 'var(--red)';
+                status.textContent = 'Geplande tijd ligt in het verleden';
+                return;
+            }
+            scheduledFor = local.toISOString();
+        } else if (dateVal || timeVal) {
+            status.style.color = 'var(--red)';
+            status.textContent = 'Vul zowel datum als tijd in om in te plannen.';
+            return;
         }
 
         status.style.color = 'var(--gray-mid)';
-        status.textContent = 'Versturen...';
+        status.textContent = scheduledFor ? 'Inplannen...' : 'Pakket samenstellen en versturen...';
 
         try {
             const res = await fetch('/.netlify/functions/demo-send', {
@@ -763,20 +853,24 @@
                 headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     signupId: currentDemoSignup.id,
-                    code: code.toUpperCase(),
-                    subject,
-                    message,
-                    attachments
+                    code: codeRaw ? codeRaw.toUpperCase() : null,
+                    subject: subject || null,
+                    message: message || null,
+                    demoVersionId,
+                    recipientOverride: recipientOverride || null,
+                    scheduledFor
                 })
             });
             const data = await res.json();
             if (res.ok) {
                 status.style.color = 'var(--green)';
-                status.textContent = 'Verstuurd!';
+                status.textContent = scheduledFor
+                    ? `Ingepland voor ${new Date(scheduledFor).toLocaleString('nl-NL')}`
+                    : `Verstuurd! Code: ${data.code}`;
                 setTimeout(() => {
                     closeSendDemoModal();
                     loadDemoSignups();
-                }, 1500);
+                }, 1800);
             } else {
                 status.style.color = 'var(--red)';
                 status.textContent = data.error || 'Versturen mislukt';
@@ -787,14 +881,100 @@
         }
     }
 
-    function readFileAsBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result.split(',')[1]);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
+    async function cancelScheduledJob(jobId) {
+        if (!confirm('Geplande verzending annuleren?')) return;
+        try {
+            const res = await fetch('/.netlify/functions/demo-send', {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ jobId })
+            });
+            if (res.ok) loadDemoSignups();
+            else alert('Annuleren mislukt');
+        } catch (e) {
+            alert('Fout: ' + e.message);
+        }
     }
+
+    // Shared rendering logic — used by generatePdf to download manual standalone
+    function renderManualToDoc(doc, title, version, content) {
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const teal = [32, 67, 62];
+        const grayMid = [142, 142, 147];
+
+        doc.setFillColor(teal[0], teal[1], teal[2]);
+        doc.rect(0, 0, pageW, 30, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('BIM LYNK', margin, 18);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('LYNK Electrical', margin, 25);
+        doc.setFontSize(9);
+        doc.text('part of CVL SOLUTIONS', pageW - margin, 25, { align: 'right' });
+
+        let y = 50;
+        doc.setTextColor(teal[0], teal[1], teal[2]);
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, margin, y);
+        y += 8;
+        doc.setFontSize(11);
+        doc.setTextColor(grayMid[0], grayMid[1], grayMid[2]);
+        doc.setFont('helvetica', 'normal');
+        doc.text(version + '  •  ' + new Date().toLocaleDateString('nl-NL'), margin, y);
+        y += 12;
+
+        doc.setDrawColor(teal[0], teal[1], teal[2]);
+        doc.setLineWidth(0.5);
+        doc.line(margin, y, pageW - margin, y);
+        y += 10;
+
+        const lines = content.split('\n');
+        doc.setTextColor(28, 28, 30);
+
+        for (const rawLine of lines) {
+            if (y > pageH - 25) {
+                addFooter(doc, pageW, pageH, margin, teal);
+                doc.addPage();
+                y = margin;
+            }
+            const line = rawLine.trimEnd();
+            if (line.startsWith('# ')) {
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+                doc.setTextColor(teal[0], teal[1], teal[2]);
+                doc.text(line.substring(2), margin, y); y += 9;
+                doc.setTextColor(28, 28, 30);
+            } else if (line.startsWith('## ')) {
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+                doc.setTextColor(teal[0], teal[1], teal[2]);
+                doc.text(line.substring(3), margin, y); y += 7;
+                doc.setTextColor(28, 28, 30);
+            } else if (line.startsWith('### ')) {
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+                doc.text(line.substring(4), margin, y); y += 6;
+            } else if (line.startsWith('- ') || line.startsWith('* ')) {
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+                const wrapped = doc.splitTextToSize('• ' + line.substring(2), pageW - 2 * margin - 5);
+                doc.text(wrapped, margin + 5, y); y += wrapped.length * 5;
+            } else if (/^\d+\.\s/.test(line)) {
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+                const wrapped = doc.splitTextToSize(line, pageW - 2 * margin - 5);
+                doc.text(wrapped, margin + 5, y); y += wrapped.length * 5;
+            } else if (line === '') {
+                y += 4;
+            } else {
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+                const wrapped = doc.splitTextToSize(line, pageW - 2 * margin);
+                doc.text(wrapped, margin, y); y += wrapped.length * 5;
+            }
+        }
+        addFooter(doc, pageW, pageH, margin, teal);
+    }
+
     </script>
 </body>
 </html>
