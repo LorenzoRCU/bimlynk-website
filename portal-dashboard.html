@@ -7,6 +7,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; }
         body { background: var(--gray-light); min-height: 100vh; }
@@ -86,6 +87,7 @@
             <button class="portal-tab active" onclick="showTab('feedback')">Feedback</button>
             <button class="portal-tab" onclick="showTab('mijn')" id="tabMijn">Mijn Feedback</button>
             <button class="portal-tab hidden" onclick="showTab('admin')" id="tabAdmin">Aanmeldingen</button>
+            <button class="portal-tab hidden" onclick="showTab('manuals')" id="tabManuals">Handleidingen</button>
         </div>
     </div>
 
@@ -132,6 +134,46 @@
             <div id="myFeedbackList"><div class="loading">Laden...</div></div>
         </div>
 
+        <!-- Manuals Tab (admin only) -->
+        <div id="tab-manuals" class="hidden">
+            <div class="card">
+                <h3>Tool Handleidingen Beheer</h3>
+                <p style="color:var(--gray-mid);font-size:0.85rem;margin-bottom:16px;">
+                    Maak en bewerk handleidingen per tool. Genereer ze als PDF in BIM LYNK huisstijl.
+                </p>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;">
+                    <div style="flex:1;min-width:200px;">
+                        <label style="display:block;font-size:0.8rem;color:var(--gray-mid);margin-bottom:4px;">Selecteer tool</label>
+                        <select id="manualTool" onchange="loadManual()" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;font-family:var(--font-body);">
+                            <option value="cable_tray_support">Cable Tray Support</option>
+                            <option value="cable_tray_clearance">Cable Tray Clearance</option>
+                            <option value="conduit_id">Conduit ID Generator</option>
+                            <option value="cable_tray_id">Cable Tray ID Generator</option>
+                            <option value="fill_rate">Fill Rate Tool</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-teal" onclick="saveManual()">Opslaan</button>
+                    <button class="btn btn-teal" onclick="generatePdf()">Genereer PDF</button>
+                </div>
+
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                    <div style="flex:1;min-width:200px;">
+                        <label style="display:block;font-size:0.8rem;color:var(--gray-mid);margin-bottom:4px;">Titel</label>
+                        <input type="text" id="manualTitle" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;" placeholder="Bijv. Cable Tray Support Handleiding">
+                    </div>
+                    <div style="flex:1;min-width:200px;">
+                        <label style="display:block;font-size:0.8rem;color:var(--gray-mid);margin-bottom:4px;">Versie</label>
+                        <input type="text" id="manualVersion" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.9rem;" placeholder="v1.0">
+                    </div>
+                </div>
+
+                <label style="display:block;font-size:0.8rem;color:var(--gray-mid);margin-bottom:4px;">Inhoud (Markdown ondersteund)</label>
+                <textarea id="manualContent" style="width:100%;min-height:400px;padding:12px;border:1px solid var(--border);border-radius:8px;font-family:Consolas,monospace;font-size:0.85rem;resize:vertical;" placeholder="# Tool naam&#10;&#10;## Wat doet deze tool?&#10;Beschrijving...&#10;&#10;## Hoe te gebruiken&#10;1. Stap een&#10;2. Stap twee&#10;&#10;## Tips"></textarea>
+
+                <p id="manualStatus" style="margin-top:8px;font-size:0.8rem;color:var(--gray-mid);"></p>
+            </div>
+        </div>
+
         <!-- Admin Tab -->
         <div id="tab-admin" class="hidden">
             <div class="stat-cards" id="adminStats"></div>
@@ -160,6 +202,7 @@
     document.getElementById('userTag').textContent = ROLE === 'admin' ? 'Admin' : TAG;
     if (ROLE === 'admin') {
         document.getElementById('tabAdmin').classList.remove('hidden');
+        document.getElementById('tabManuals').classList.remove('hidden');
         document.getElementById('feedbackFormCard').classList.add('hidden');
         document.getElementById('tabMijn').classList.add('hidden');
     }
@@ -299,6 +342,192 @@
         const div = document.createElement('div');
         div.textContent = text || '';
         return div.innerHTML;
+    }
+
+    // ======================== MANUALS ========================
+
+    const TOOL_NAMES = {
+        cable_tray_support: 'Cable Tray Support',
+        cable_tray_clearance: 'Cable Tray Clearance',
+        conduit_id: 'Conduit ID Generator',
+        cable_tray_id: 'Cable Tray ID Generator',
+        fill_rate: 'Fill Rate Tool'
+    };
+
+    async function loadManual() {
+        const tool = document.getElementById('manualTool').value;
+        try {
+            const res = await fetch('/.netlify/functions/portal-manuals?tool=' + encodeURIComponent(tool), {
+                headers: { 'Authorization': 'Bearer ' + TOKEN }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('manualTitle').value = data.title || (TOOL_NAMES[tool] + ' Handleiding');
+                document.getElementById('manualVersion').value = data.version || 'v1.0';
+                document.getElementById('manualContent').value = data.content || '';
+                document.getElementById('manualStatus').textContent = data.lastUpdated ? 'Laatst bijgewerkt: ' + new Date(data.lastUpdated).toLocaleString('nl-NL') : 'Nog niet opgeslagen';
+            } else {
+                document.getElementById('manualTitle').value = TOOL_NAMES[tool] + ' Handleiding';
+                document.getElementById('manualVersion').value = 'v1.0';
+                document.getElementById('manualContent').value = '';
+                document.getElementById('manualStatus').textContent = 'Nieuwe handleiding';
+            }
+        } catch (e) {
+            document.getElementById('manualStatus').textContent = 'Fout bij laden: ' + e.message;
+        }
+    }
+
+    async function saveManual() {
+        const tool = document.getElementById('manualTool').value;
+        const payload = {
+            tool,
+            title: document.getElementById('manualTitle').value,
+            version: document.getElementById('manualVersion').value,
+            content: document.getElementById('manualContent').value
+        };
+        try {
+            const res = await fetch('/.netlify/functions/portal-manuals', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                document.getElementById('manualStatus').textContent = 'Opgeslagen: ' + new Date().toLocaleString('nl-NL');
+            } else {
+                document.getElementById('manualStatus').textContent = 'Opslaan mislukt';
+            }
+        } catch (e) {
+            document.getElementById('manualStatus').textContent = 'Fout: ' + e.message;
+        }
+    }
+
+    function generatePdf() {
+        const tool = document.getElementById('manualTool').value;
+        const title = document.getElementById('manualTitle').value || TOOL_NAMES[tool];
+        const version = document.getElementById('manualVersion').value || 'v1.0';
+        const content = document.getElementById('manualContent').value;
+
+        if (!content.trim()) { alert('Vul eerst inhoud in.'); return; }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+        const pageW = doc.internal.pageSize.getWidth();
+        const pageH = doc.internal.pageSize.getHeight();
+        const margin = 20;
+        const teal = [32, 67, 62];
+        const grayMid = [142, 142, 147];
+
+        // Header bar
+        doc.setFillColor(teal[0], teal[1], teal[2]);
+        doc.rect(0, 0, pageW, 30, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.text('BIM LYNK', margin, 18);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('LYNK Electrical', margin, 25);
+        doc.setFontSize(9);
+        doc.text('part of CVL SOLUTIONS', pageW - margin, 25, { align: 'right' });
+
+        // Title block
+        let y = 50;
+        doc.setTextColor(teal[0], teal[1], teal[2]);
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, margin, y);
+        y += 8;
+        doc.setFontSize(11);
+        doc.setTextColor(grayMid[0], grayMid[1], grayMid[2]);
+        doc.setFont('helvetica', 'normal');
+        doc.text(version + '  •  ' + new Date().toLocaleDateString('nl-NL'), margin, y);
+        y += 12;
+
+        // Divider
+        doc.setDrawColor(teal[0], teal[1], teal[2]);
+        doc.setLineWidth(0.5);
+        doc.line(margin, y, pageW - margin, y);
+        y += 10;
+
+        // Body — simple markdown rendering
+        const lines = content.split('\n');
+        doc.setTextColor(28, 28, 30);
+
+        for (const rawLine of lines) {
+            if (y > pageH - 25) {
+                addFooter(doc, pageW, pageH, margin, teal);
+                doc.addPage();
+                y = margin;
+            }
+
+            const line = rawLine.trimEnd();
+
+            if (line.startsWith('# ')) {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(16);
+                doc.setTextColor(teal[0], teal[1], teal[2]);
+                doc.text(line.substring(2), margin, y);
+                y += 9;
+                doc.setTextColor(28, 28, 30);
+            } else if (line.startsWith('## ')) {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(13);
+                doc.setTextColor(teal[0], teal[1], teal[2]);
+                doc.text(line.substring(3), margin, y);
+                y += 7;
+                doc.setTextColor(28, 28, 30);
+            } else if (line.startsWith('### ')) {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(11);
+                doc.text(line.substring(4), margin, y);
+                y += 6;
+            } else if (line.startsWith('- ') || line.startsWith('* ')) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                const wrapped = doc.splitTextToSize('• ' + line.substring(2), pageW - 2 * margin - 5);
+                doc.text(wrapped, margin + 5, y);
+                y += wrapped.length * 5;
+            } else if (/^\d+\.\s/.test(line)) {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                const wrapped = doc.splitTextToSize(line, pageW - 2 * margin - 5);
+                doc.text(wrapped, margin + 5, y);
+                y += wrapped.length * 5;
+            } else if (line === '') {
+                y += 4;
+            } else {
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                const wrapped = doc.splitTextToSize(line, pageW - 2 * margin);
+                doc.text(wrapped, margin, y);
+                y += wrapped.length * 5;
+            }
+        }
+
+        addFooter(doc, pageW, pageH, margin, teal);
+
+        const safeName = title.replace(/[^a-z0-9\-_ ]/gi, '_');
+        doc.save(safeName + '_' + version + '.pdf');
+    }
+
+    function addFooter(doc, pageW, pageH, margin, teal) {
+        doc.setDrawColor(teal[0], teal[1], teal[2]);
+        doc.setLineWidth(0.3);
+        doc.line(margin, pageH - 18, pageW - margin, pageH - 18);
+        doc.setFontSize(8);
+        doc.setTextColor(142, 142, 147);
+        doc.setFont('helvetica', 'normal');
+        doc.text('© BIM LYNK - part of CVL SOLUTIONS', margin, pageH - 12);
+        doc.text('bimlynk.netlify.app', pageW - margin, pageH - 12, { align: 'right' });
+        const pageNum = doc.internal.getCurrentPageInfo().pageNumber;
+        doc.text('Pagina ' + pageNum, pageW / 2, pageH - 12, { align: 'center' });
+    }
+
+    // Auto-load first manual when admin opens manuals tab
+    if (ROLE === 'admin') {
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(loadManual, 100);
+        });
     }
     </script>
 </body>
