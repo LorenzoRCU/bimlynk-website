@@ -291,6 +291,9 @@ p { margin-bottom: 1rem; }
     .footer-grid { grid-template-columns: 1fr 1fr; }
     .product-card { padding: 32px 24px; }
     .tool-card { padding: 24px 20px; }
+    #custom-tool .container > div { grid-template-columns: 1fr !important; gap: 40px !important; }
+    #custom-tool .container > div > div:last-child { padding: 28px !important; }
+    #custom-tool .container > div > div:first-child > div:nth-child(3) { grid-template-columns: 1fr !important; }
 }
 
 @media (max-width: 640px) {
