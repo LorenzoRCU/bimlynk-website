@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo aanvragen | LYNK Electrical Demo v1.0 | BIM LYNK</title>
+    <meta name="description" content="Vraag een gratis 14-dagen demo aan van LYNK Electrical Demo v1.0. Cable Tray Support, Clearance, Tag Generator.">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-inner">
+            <a href="index.html" class="logo"><img src="img/logo.png" alt="BIM LYNK"><span class="logo-text">BIM LYNK</span></a>
+            <nav class="nav-links">
+                <a href="tools.html">LYNK Electrical</a>
+                <a href="fill-rate.html">Fill Rate Light NL</a>
+                <a href="demo-signup.html" class="active">Demo aanvragen</a>
+                <a href="portal.html">Portaal</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="section" style="padding-top: 80px;">
+        <div class="container" style="max-width: 720px;">
+            <div class="section-header" style="text-align: center; margin-bottom: 32px;">
+                <span class="section-label">LYNK Electrical Demo v1.0</span>
+                <h2>Vraag een gratis 14-dagen demo aan</h2>
+                <p class="section-subtitle">Test de Cable Tray Support, Clearance en Tag Generator tools 14 dagen lang in jouw eigen Revit projecten.</p>
+            </div>
+
+            <div class="card" style="background: white; border-radius: 12px; padding: 32px; border: 1px solid var(--border);">
+                <form id="demoForm" onsubmit="submitDemo(event)">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div>
+                            <label style="display:block;font-size:0.85rem;color:var(--gray-mid);margin-bottom:4px;">Voornaam *</label>
+                            <input type="text" id="firstName" required style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:var(--font-body);box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:0.85rem;color:var(--gray-mid);margin-bottom:4px;">Achternaam *</label>
+                            <input type="text" id="lastName" required style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:var(--font-body);box-sizing:border-box;">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label style="display:block;font-size:0.85rem;color:var(--gray-mid);margin-bottom:4px;">Bedrijf *</label>
+                        <input type="text" id="company" required style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:var(--font-body);box-sizing:border-box;">
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label style="display:block;font-size:0.85rem;color:var(--gray-mid);margin-bottom:4px;">Zakelijk e-mail *</label>
+                        <input type="email" id="email" required style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:var(--font-body);box-sizing:border-box;">
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label style="display:block;font-size:0.85rem;color:var(--gray-mid);margin-bottom:4px;">Functie</label>
+                        <input type="text" id="role" placeholder="bijv. Elektrotechnisch Engineer" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:var(--font-body);box-sizing:border-box;">
+                    </div>
+
+                    <div style="margin-bottom: 16px;">
+                        <label style="display:block;font-size:0.85rem;color:var(--gray-mid);margin-bottom:4px;">Welke Revit versies gebruik je? *</label>
+                        <div style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 0;">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;cursor:pointer;"><input type="checkbox" name="revitVersion" value="2023"> Revit 2023</label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;cursor:pointer;"><input type="checkbox" name="revitVersion" value="2024" checked> Revit 2024</label>
+                            <label style="display:flex;align-items:center;gap:6px;font-size:0.9rem;cursor:pointer;"><input type="checkbox" name="revitVersion" value="2025" checked> Revit 2025</label>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display:block;font-size:0.85rem;color:var(--gray-mid);margin-bottom:4px;">Toelichting (optioneel)</label>
+                        <textarea id="notes" rows="3" placeholder="Vertel ons waar je de tool voor wilt gebruiken..." style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;font-family:var(--font-body);box-sizing:border-box;resize:vertical;"></textarea>
+                    </div>
+
+                    <p id="formStatus" style="font-size:0.85rem;margin-bottom:12px;"></p>
+
+                    <button type="submit" class="btn btn-teal" style="width:100%;justify-content:center;padding:14px;font-size:1rem;">
+                        Demo aanvragen
+                    </button>
+                </form>
+            </div>
+
+            <div style="margin-top: 24px; padding: 16px; background: rgba(32,67,62,0.05); border-radius: 8px; font-size: 0.85rem; color: var(--gray-mid);">
+                <strong style="color:var(--teal);">Wat krijg je?</strong><br>
+                Na het aanvragen krijg je binnen 1 werkdag een e-mail met:<br>
+                • Een unieke 14-dagen activatiecode<br>
+                • De installer (.exe)<br>
+                • PDF handleidingen van de tools in de demo
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© BIM LYNK - part of CVL SOLUTIONS</p>
+        </div>
+    </footer>
+
+    <script>
+    async function submitDemo(e) {
+        e.preventDefault();
+        const status = document.getElementById('formStatus');
+        const versions = Array.from(document.querySelectorAll('input[name="revitVersion"]:checked')).map(c => c.value);
+
+        if (versions.length === 0) {
+            status.style.color = 'var(--red)';
+            status.textContent = 'Selecteer minimaal één Revit versie.';
+            return;
+        }
+
+        const payload = {
+            firstName: document.getElementById('firstName').value.trim(),
+            lastName: document.getElementById('lastName').value.trim(),
+            company: document.getElementById('company').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            role: document.getElementById('role').value.trim(),
+            revitVersions: versions,
+            notes: document.getElementById('notes').value.trim()
+        };
+
+        status.style.color = 'var(--gray-mid)';
+        status.textContent = 'Versturen...';
+
+        try {
+            const res = await fetch('/.netlify/functions/demo-signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                status.style.color = 'var(--green)';
+                status.textContent = 'Aanvraag verstuurd! Je ontvangt binnen 1 werkdag een e-mail.';
+                document.getElementById('demoForm').reset();
+            } else {
+                status.style.color = 'var(--red)';
+                status.textContent = data.error || 'Er ging iets mis.';
+            }
+        } catch (err) {
+            status.style.color = 'var(--red)';
+            status.textContent = 'Verbindingsfout. Probeer het later opnieuw.';
+        }
+    }
+    </script>
+</body>
+</html>
