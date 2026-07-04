@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abonnement afsluiten | BIM LYNK</title>
+    <meta name="description" content="Sluit je jaarabonnement af voor LYNK Electrical of Fill Rate Light NL. Early Adopter prijzen.">
+    <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .form-section { border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 18px; background: white; }
+        .form-section h3 { margin: 0 0 4px; color: var(--teal); font-size: 1.1rem; }
+        .form-section .section-desc { font-size: 0.8rem; color: var(--gray-mid); margin-bottom: 16px; }
+        .fld { margin-bottom: 12px; }
+        .fld label { display:block; font-size: 0.8rem; color: var(--gray-mid); margin-bottom: 4px; }
+        .fld input, .fld select, .fld textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; font-family: var(--font-body); box-sizing: border-box; }
+        .fld input:focus, .fld select:focus { outline: 2px solid var(--teal); border-color: var(--teal); }
+        .fld-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .fld-row-3 { display: grid; grid-template-columns: 1fr 2fr 2fr; gap: 14px; }
+        .mandate-box { background: #F2F2F7; border-left: 3px solid var(--teal); padding: 14px; border-radius: 6px; font-size: 0.82rem; line-height: 1.55; color: #1C1C1E; margin-bottom: 12px; }
+        .consent { display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; line-height: 1.5; padding: 10px 0; }
+        .consent input[type=checkbox] { margin-top: 3px; width: 16px; height: 16px; flex-shrink: 0; }
+        .order-summary { background: linear-gradient(135deg, #20433e, #2a5a53); color: white; border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+        .order-summary h3 { color: white; margin: 0 0 8px; font-size: 1.2rem; }
+        .order-summary .price-line { display: flex; justify-content: space-between; align-items: baseline; margin: 10px 0; font-size: 0.95rem; }
+        .order-summary .price-line strong { font-size: 1.6rem; color: #34C759; }
+        .order-summary .incl { font-size: 0.75rem; opacity: 0.75; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-inner">
+            <a href="index.html" class="logo"><img src="img/logo.png" alt="BIM LYNK"><span class="logo-text">BIM LYNK</span></a>
+            <nav class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="tools.html">LYNK Electrical</a>
+                <a href="fill-rate.html">Fill Rate Light NL <span class="badge badge-red" style="font-size: 0.65rem; padding: 2px 8px; margin-left: 4px;">Beta</span></a>
+                <a href="index.html#custom-tool" style="color: var(--green); font-weight: 600;">Custom tool</a>
+                <a href="invest.html" style="color: var(--green); font-weight: 600;">Investeerders</a>
+                <a href="demo-signup.html">Demo</a>
+                <a href="beta.html">Beta Tester</a>
+                <a href="portal.html">Portaal</a>
+                <a href="contact.html" class="btn btn-teal btn-sm nav-cta">Contact</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="section" style="padding-top: 60px;">
+        <div class="container" style="max-width: 760px;">
+            <div class="section-header" style="text-align: center; margin-bottom: 24px;">
+                <span class="section-label">Bestelling afronden</span>
+                <h2>Je abonnement afsluiten</h2>
+                <p class="section-subtitle">Vul je bedrijfs- en betaalgegevens in. Je ontvangt binnen 1 werkdag een factuur per e-mail en je licentiecode zodra de eerste betaling is geïnd.</p>
+            </div>
+
+            <!-- Order summary (populated from ?product=) -->
+            <div class="order-summary" id="orderSummary">
+                <h3 id="productName">LYNK Electrical — Jaarabonnement</h3>
+                <p style="margin: 6px 0; font-size: 0.9rem; opacity: 0.9;" id="productDesc">Cable Tray Clearance + Support Generator. Toekomstige tools (incl. Fill Rate Pro &amp; Light) automatisch inbegrepen tijdens je Early Adopter periode.</p>
+                <div class="price-line">
+                    <span>Early Adopter prijs</span>
+                    <div style="text-align:right;">
+                        <strong id="productPrice">€ 14,92 / maand</strong>
+                        <div id="productPriceSub" style="font-size:0.78rem;opacity:0.75;margin-top:2px;">jaarlijks € 179 vooraf</div>
+                    </div>
+                </div>
+                <div class="incl" id="productIncl">Automatische incasso, per jaar vooraf. Stopt automatisch na 12 maanden tenzij verlengd.</div>
+            </div>
+
+            <form id="subscribeForm" onsubmit="submitSubscribe(event)">
+                <!-- Bedrijfsgegevens -->
+                <div class="form-section">
+                    <h3>1. Bedrijfsgegevens</h3>
+                    <p class="section-desc">Deze gegevens komen op de factuur te staan.</p>
+                    <div class="fld">
+                        <label>Bedrijfsnaam *</label>
+                        <input type="text" id="companyName" required>
+                    </div>
+                    <div class="fld-row">
+                        <div class="fld">
+                            <label>KvK nummer (optioneel)</label>
+                            <input type="text" id="kvkNumber" pattern="[0-9]{8}" placeholder="12345678">
+                        </div>
+                        <div class="fld">
+                            <label>BTW nummer (optioneel)</label>
+                            <input type="text" id="vatNumber" placeholder="NL123456789B01">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contactpersoon -->
+                <div class="form-section">
+                    <h3>2. Contactpersoon</h3>
+                    <p class="section-desc">De persoon die de licentie gaat gebruiken en met wie wij contact opnemen.</p>
+                    <div class="fld-row">
+                        <div class="fld">
+                            <label>Voornaam *</label>
+                            <input type="text" id="firstName" required>
+                        </div>
+                        <div class="fld">
+                            <label>Achternaam *</label>
+                            <input type="text" id="lastName" required>
+                        </div>
+                    </div>
+                    <div class="fld">
+                        <label>E-mailadres *</label>
+                        <input type="email" id="email" required>
+                    </div>
+                    <div class="fld-row">
+                        <div class="fld">
+                            <label>Telefoon *</label>
+                            <input type="tel" id="phone" required>
+                        </div>
+                        <div class="fld">
+                            <label>Functie</label>
+                            <input type="text" id="jobRole" placeholder="Bijv. BIM Engineer">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Factuuradres -->
+                <div class="form-section">
+                    <h3>3. Factuuradres</h3>
+                    <p class="section-desc">Alleen voor administratieve doeleinden.</p>
+                    <div class="fld-row-3">
+                        <div class="fld">
+                            <label>Postcode *</label>
+                            <input type="text" id="postalCode" required placeholder="1234 AB">
+                        </div>
+                        <div class="fld">
+                            <label>Straat *</label>
+                            <input type="text" id="street" required>
+                        </div>
+                        <div class="fld">
+                            <label>Huisnummer *</label>
+                            <input type="text" id="houseNumber" required>
+                        </div>
+                    </div>
+                    <div class="fld-row">
+                        <div class="fld">
+                            <label>Plaats *</label>
+                            <input type="text" id="city" required>
+                        </div>
+                        <div class="fld">
+                            <label>Land *</label>
+                            <select id="country" required>
+                                <option value="NL" selected>Nederland</option>
+                                <option value="BE">België</option>
+                                <option value="DE">Duitsland</option>
+                                <option value="LU">Luxemburg</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEPA machtiging -->
+                <div class="form-section">
+                    <h3>4. SEPA Automatische Incasso</h3>
+                    <p class="section-desc">Door hieronder akkoord te geven machtig je BIM LYNK (onderdeel van CVL Solutions) om het bedrag jaarlijks automatisch van je rekening af te schrijven.</p>
+                    <div class="fld">
+                        <label>IBAN *</label>
+                        <input type="text" id="iban" required placeholder="NL00 BANK 0000 0000 00" maxlength="34" oninput="formatIban(this)">
+                    </div>
+                    <div class="fld">
+                        <label>Tenaamstelling rekening *</label>
+                        <input type="text" id="accountHolder" required placeholder="Naam zoals op de rekening">
+                    </div>
+
+                    <div class="mandate-box">
+                        <strong>SEPA Machtiging</strong><br>
+                        Door ondertekening van dit machtigingsformulier geeft u toestemming aan <strong>BIM LYNK (onderdeel van CVL Solutions)</strong> om doorlopende incasso-opdrachten te sturen naar uw bank om een bedrag van uw rekening af te schrijven, en aan uw bank om doorlopend een bedrag van uw rekening af te schrijven overeenkomstig de opdracht van BIM LYNK / CVL Solutions.
+                        <br><br>
+                        Als u het niet eens bent met deze afschrijving kunt u deze laten terugboeken. Neem hiervoor binnen 8 weken na afschrijving contact op met uw bank. Vraag uw bank naar de voorwaarden. Incassant ID en machtigingskenmerk ontvang je op de factuur.
+                    </div>
+
+                    <label class="consent">
+                        <input type="checkbox" id="consentTerms" required>
+                        <span>Ik ga akkoord met de <a href="voorwaarden.html" target="_blank" style="color: var(--teal); text-decoration: underline;">algemene voorwaarden</a> en begrijp dat het abonnement één jaar loopt en automatisch verlengt tenzij ik 30 dagen voor afloop opzeg.</span>
+                    </label>
+                </div>
+
+                <p id="formStatus" style="font-size: 0.9rem; margin: 12px 0; text-align: center;"></p>
+
+                <button type="submit" class="btn btn-green" style="width: 100%; justify-content: center; padding: 16px; font-size: 1.05rem;">
+                    Bevestig bestelling &amp; SEPA machtiging
+                </button>
+
+                <p style="text-align: center; font-size: 0.75rem; color: var(--gray-mid); margin-top: 14px;">
+                    Na bevestiging ontvang je een bevestigingsmail met je bestelgegevens. De eerste factuur volgt binnen 1 werkdag. Je licentie wordt geactiveerd zodra de eerste incasso geslaagd is.
+                </p>
+            </form>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© BIM LYNK - onderdeel van CVL Solutions · <a href="mailto:info@bimlynk.com" style="color: rgba(255,255,255,0.7);">info@bimlynk.com</a></p>
+        </div>
+    </footer>
+
+    <script>
+    // Product catalog — keep in sync with netlify/functions/subscribe.js
+    const PRODUCTS = {
+        'lynk-electrical-yearly': {
+            name: 'LYNK Electrical — Jaarabonnement',
+            desc: 'Cable Tray Clearance + Support Generator. Toekomstige tools (incl. Fill Rate Pro & Light) automatisch inbegrepen tijdens je Early Adopter periode.',
+            price: 179,
+            priceLabel: '€ 14,92 / maand',
+            priceSub: 'jaarlijks € 179 vooraf',
+            billing: 'Automatische incasso, per jaar vooraf. Stopt automatisch na 12 maanden tenzij verlengd.'
+        },
+        'fillrate-light-yearly': {
+            name: 'Fill Rate Light NL — Jaarabonnement',
+            desc: 'Standalone vulgraadcalculator voor Revit. Excel workflow + 3D kleurvisualisatie. Launch-prijs voor vroege klanten.',
+            price: 79,
+            priceLabel: '€ 6,58 / maand',
+            priceSub: 'jaarlijks € 79 vooraf',
+            billing: 'Automatische incasso, per jaar vooraf. Start na afloop van de beta-periode (14 juli 2026).'
+        }
+    };
+
+    // Load product from URL param
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('product') || 'lynk-electrical-yearly';
+    const product = PRODUCTS[productId] || PRODUCTS['lynk-electrical-yearly'];
+    document.getElementById('productName').textContent = product.name;
+    document.getElementById('productDesc').textContent = product.desc;
+    document.getElementById('productPrice').textContent = product.priceLabel;
+    document.getElementById('productPriceSub').textContent = product.priceSub || '';
+    document.getElementById('productIncl').textContent = product.billing;
+
+    function formatIban(input) {
+        let v = input.value.replace(/\s+/g, '').toUpperCase();
+        v = v.replace(/[^A-Z0-9]/g, '');
+        if (v.length > 34) v = v.substring(0, 34);
+        input.value = v.replace(/(.{4})/g, '$1 ').trim();
+    }
+
+    // IBAN mod-97 check (ISO 13616)
+    function ibanIsValid(iban) {
+        iban = iban.replace(/\s+/g, '').toUpperCase();
+        if (iban.length < 15 || iban.length > 34) return false;
+        if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]+$/.test(iban)) return false;
+        const rearranged = iban.slice(4) + iban.slice(0, 4);
+        const numeric = rearranged.split('').map(c => {
+            if (c >= 'A' && c <= 'Z') return (c.charCodeAt(0) - 55).toString();
+            return c;
+        }).join('');
+        // mod 97 over a long numeric string
+        let rem = '';
+        for (const ch of numeric) {
+            rem = (rem + ch);
+            if (rem.length > 9) rem = (parseInt(rem, 10) % 97).toString();
+        }
+        return parseInt(rem, 10) % 97 === 1;
+    }
+
+    async function submitSubscribe(e) {
+        e.preventDefault();
+        const status = document.getElementById('formStatus');
+
+        const iban = document.getElementById('iban').value.replace(/\s+/g, '').toUpperCase();
+        if (!ibanIsValid(iban)) {
+            status.style.color = 'var(--red)';
+            status.textContent = 'Het IBAN lijkt niet geldig. Controleer het rekeningnummer.';
+            return;
+        }
+
+        if (!document.getElementById('consentTerms').checked) {
+            status.style.color = 'var(--red)';
+            status.textContent = 'Je moet akkoord gaan met de algemene voorwaarden om door te gaan.';
+            return;
+        }
+
+        const payload = {
+            productId,
+            companyName: document.getElementById('companyName').value.trim(),
+            kvkNumber: document.getElementById('kvkNumber').value.trim(),
+            vatNumber: document.getElementById('vatNumber').value.trim(),
+            firstName: document.getElementById('firstName').value.trim(),
+            lastName: document.getElementById('lastName').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            jobRole: document.getElementById('jobRole').value.trim(),
+            postalCode: document.getElementById('postalCode').value.trim(),
+            street: document.getElementById('street').value.trim(),
+            houseNumber: document.getElementById('houseNumber').value.trim(),
+            city: document.getElementById('city').value.trim(),
+            country: document.getElementById('country').value,
+            iban,
+            accountHolder: document.getElementById('accountHolder').value.trim(),
+            consentSepa: true, // implicit via terms acceptance — SEPA mandate is part of terms
+            consentTerms: true
+        };
+
+        status.style.color = 'var(--gray-mid)';
+        status.textContent = 'Bestelling versturen...';
+
+        try {
+            const res = await fetch('/.netlify/functions/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (res.ok) {
+                status.style.color = 'var(--green)';
+                status.textContent = '✓ Bestelling ontvangen! Je krijgt binnen 1 werkdag de factuur per e-mail. Je licentiecode is: ' + (data.licenseCode || '[zie mail]');
+                document.getElementById('subscribeForm').reset();
+                setTimeout(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, 500);
+            } else {
+                status.style.color = 'var(--red)';
+                status.textContent = data.error || 'Bestelling mislukt.';
+            }
+        } catch (err) {
+            status.style.color = 'var(--red)';
+            status.textContent = 'Verbindingsfout: ' + err.message;
+        }
+    }
+    </script>
+</body>
+</html>
