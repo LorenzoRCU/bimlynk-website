@@ -209,7 +209,10 @@ exports.handler = async (event) => {
   const sessions = (await getData('PORTAL_SESSIONS')) || {};
   const session = sessions[token];
   if (!session || session.role !== 'admin')
-    return { statusCode: 403, headers, body: JSON.stringify({ error: 'Alleen admin.' }) };
+    return { statusCode: 403, headers, body: JSON.stringify({
+      error: 'Alleen admin.',
+      _debug: { tokenPrefix: token.slice(0, 12), sessionCount: Object.keys(sessions).length, hasSiteId: !!process.env.MY_SITE_ID, hasApiToken: !!process.env.NETLIFY_API_TOKEN }
+    }) };
 
   // GET — check status of the current scheduled job (if any)
   if (event.httpMethod === 'GET') {
