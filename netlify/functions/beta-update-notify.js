@@ -1,14 +1,17 @@
 // Admin-triggered: notify ALL beta testers that a new version is available,
 // with the changelog and the scheidingsschot family attached.
-// POST with admin Bearer token. Body (optional): { version, changelog }.
+// POST with admin Bearer token. Body (optional): { version, changelog, feedbackMessage, scheduledFor }.
 // Falls back to fillrate-version.json on the site for version/changelog.
+// If scheduledFor (ISO string) is given, the send is queued instead of sent
+// immediately — beta-scheduler.js picks it up when due.
 
-const { getData } = require('./_storage');
+const { getData, setData } = require('./_storage');
 
 const FAMILY_FILES = [
   'Cable Tray_scheidingsschot_LYNK.rfa'
 ];
 const DOWNLOAD_URL = 'https://www.bimlynk.com/fillrate-download.html';
+const SCHEDULED_JOB_KEY = 'BETA_UPDATE_SCHEDULED_JOB';
 
 async function getAccessToken() {
   const url = `https://login.microsoftonline.com/${process.env.AZURE_TENANT_ID}/oauth2/v2.0/token`;
@@ -31,10 +34,17 @@ function escapeHtml(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function buildHtml(firstName, version, changelogLines) {
+function buildHtml(firstName, version, changelogLines, feedbackMessage) {
   const items = (changelogLines && changelogLines.length)
     ? changelogLines.map(l => `<li style="margin:4px 0;">${escapeHtml(l)}</li>`).join('')
     : '<li>Diverse verbeteringen en bugfixes.</li>';
+
+  const feedbackBlock = feedbackMessage ? `
+    <div style="background:#FFF8E1; border-left:3px solid #F5A623; border-radius:4px; padding:16px; margin:24px 0;">
+      <p style="margin:0 0 6px; color:#8a5b00; font-weight:600;">💬 Laatste feedback gevraagd</p>
+      <p style="margin:0; font-size:14px; color:#3C3C43; white-space:pre-line;">${escapeHtml(feedbackMessage)}</p>
+    </div>` : '';
+
   return `<!DOCTYPE html>
 <html><body style="font-family: Inter, Arial, sans-serif; color:#1C1C1E; max-width:640px; margin:0 auto;">
   <div style="background:#20433e; color:white; padding:24px; text-align:center;">
@@ -56,7 +66,7 @@ function buildHtml(firstName, version, changelogLines) {
       <p style="margin:0 0 6px; color:#20433e; font-weight:600;">📎 Scheidingsschot-familie</p>
       <p style="margin:0; font-size:14px; color:#3C3C43;">In de bijlage zit de nieuwe <strong>Cable Tray_scheidingsschot_LYNK</strong> familie. Laad 'm in je project of template om scheidingsschotten te kunnen plaatsen via de Fill Rate-tool (stap 5b).</p>
     </div>
-
+${feedbackBlock}
     <p style="font-size:13px; color:#8E8E93;">Bestaande projecten met de oude <code>NLRS_E_</code>-parameters worden bij de eerste klik automatisch en zonder dataverlies omgezet naar <code>LYNK_E_</code>.</p>
 
     <p style="margin-top:24px;">Vragen of feedback? Reply op deze e-mail of gebruik het <a href="https://www.bimlynk.com/portal" style="color:#20433e;">Beta Portaal</a>. De tester met de meest waardevolle feedback wint een lifetime license voor LYNK Electrical.</p>
@@ -83,10 +93,10 @@ async function fetchFamilies() {
   return out;
 }
 
-async function sendUpdateMail(graphToken, to, firstName, version, changelogLines, families) {
+async function sendUpdateMail(graphToken, to, firstName, version, changelogLines, feedbackMessage, families) {
   const sender = process.env.SENDER_EMAIL;
   const graphBase = `https://graph.microsoft.com/v1.0/users/${sender}`;
-  const html = buildHtml(firstName, version, changelogLines);
+  const html = buildHtml(firstName, version, changelogLines, feedbackMessage);
 
   const draftRes = await fetch(`${graphBase}/messages`, {
     method: 'POST',
@@ -117,15 +127,81 @@ async function sendUpdateMail(graphToken, to, firstName, version, changelogLines
   if (sendRes.status !== 202) throw new Error(`Send failed: ${sendRes.status}`);
 }
 
+// Resolves version/changelog from explicit args, else from the site's fillrate-version.json.
+async function resolveVersionAndChangelog(version, changelogLines) {
+  if (!version || !changelogLines) {
+    try {
+      const vRes = await fetch('https://www.bimlynk.com/fillrate-version.json');
+      if (vRes.ok) {
+        const vj = await vRes.json();
+        version = version || vj.version;
+        if (!changelogLines && vj.changelog) {
+          const parts = String(vj.changelog).split(/—|,/).map(s => s.trim()).filter(Boolean);
+          changelogLines = parts.length > 1 ? parts.slice(1) : [vj.changelog];
+        }
+      }
+    } catch {}
+  }
+  return { version: version || '1.1', changelogLines };
+}
+
+// Sends the update mail to every beta signup. Used for both immediate
+// (HTTP-triggered) and scheduled (cron-triggered) sends.
+async function sendToAllTesters({ version, changelogLines, feedbackMessage }) {
+  const resolved = await resolveVersionAndChangelog(version, changelogLines);
+  version = resolved.version;
+  changelogLines = resolved.changelogLines;
+
+  const signups = (await getData('BETA_SIGNUPS')) || [];
+  if (signups.length === 0) return { sent: 0, total: 0, version, familiesAttached: 0, errors: [] };
+
+  const graphToken = await getAccessToken();
+  const families = await fetchFamilies();
+
+  let sent = 0;
+  const errors = [];
+  for (const s of signups) {
+    if (!s.email) continue;
+    try {
+      await sendUpdateMail(graphToken, s.email, s.firstName, version, changelogLines, feedbackMessage, families);
+      sent++;
+    } catch (e) {
+      errors.push(`${s.email}: ${e.message}`);
+    }
+  }
+
+  return { sent, total: signups.length, version, familiesAttached: families.length, errors };
+}
+
+// Called by beta-scheduler.js on its 5-minute cron. Processes the single
+// pending scheduled job, if any, once its scheduledFor time has passed.
+async function processScheduledJob() {
+  const job = await getData(SCHEDULED_JOB_KEY);
+  if (!job || job.status !== 'pending') return null;
+  if (new Date(job.scheduledFor).getTime() > Date.now()) return null;
+
+  try {
+    const result = await sendToAllTesters({
+      version: job.version,
+      changelogLines: job.changelogLines,
+      feedbackMessage: job.feedbackMessage
+    });
+    await setData(SCHEDULED_JOB_KEY, { ...job, status: 'sent', sentAt: new Date().toISOString(), result });
+    return result;
+  } catch (e) {
+    await setData(SCHEDULED_JOB_KEY, { ...job, status: 'failed', failedAt: new Date().toISOString(), error: e.message });
+    throw e;
+  }
+}
+
 exports.handler = async (event) => {
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS'
   };
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
-  if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
 
   // Admin auth via portal session
   const token = (event.headers.authorization || '').replace('Bearer ', '');
@@ -135,52 +211,47 @@ exports.handler = async (event) => {
   if (!session || session.role !== 'admin')
     return { statusCode: 403, headers, body: JSON.stringify({ error: 'Alleen admin.' }) };
 
+  // GET — check status of the current scheduled job (if any)
+  if (event.httpMethod === 'GET') {
+    const job = await getData(SCHEDULED_JOB_KEY);
+    return { statusCode: 200, headers, body: JSON.stringify({ job }) };
+  }
+
+  if (event.httpMethod !== 'POST') return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
+
   let body = {};
   try { body = JSON.parse(event.body || '{}'); } catch {}
 
-  // Version + changelog: from body, else from the site's fillrate-version.json
-  let version = body.version;
-  let changelogLines = Array.isArray(body.changelog) ? body.changelog : null;
-  if (!version || !changelogLines) {
-    try {
-      const vRes = await fetch('https://www.bimlynk.com/fillrate-version.json');
-      if (vRes.ok) {
-        const vj = await vRes.json();
-        version = version || vj.version;
-        if (!changelogLines && vj.changelog) {
-          // split on " — " bullet markers, fall back to single line
-          const parts = String(vj.changelog).split(/—|,/).map(s => s.trim()).filter(Boolean);
-          changelogLines = parts.length > 1 ? parts.slice(1) : [vj.changelog];
-        }
-      }
-    } catch {}
-  }
-  version = version || '1.1';
+  const changelogLines = Array.isArray(body.changelog) ? body.changelog : null;
+  const feedbackMessage = body.feedbackMessage || null;
 
-  const signups = (await getData('BETA_SIGNUPS')) || [];
-  if (signups.length === 0)
-    return { statusCode: 200, headers, body: JSON.stringify({ sent: 0, total: 0, message: 'Geen testers.' }) };
+  // Scheduled path — store the job, beta-scheduler.js sends it when due.
+  if (body.scheduledFor) {
+    const when = new Date(body.scheduledFor);
+    if (isNaN(when.getTime()))
+      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Ongeldige scheduledFor datum/tijd' }) };
 
-  let graphToken;
-  try { graphToken = await getAccessToken(); }
-  catch (e) { return { statusCode: 500, headers, body: JSON.stringify({ error: 'Token: ' + e.message }) }; }
-
-  const families = await fetchFamilies();
-
-  let sent = 0;
-  const errors = [];
-  for (const s of signups) {
-    if (!s.email) continue;
-    try {
-      await sendUpdateMail(graphToken, s.email, s.firstName, version, changelogLines, families);
-      sent++;
-    } catch (e) {
-      errors.push(`${s.email}: ${e.message}`);
-    }
+    const resolved = await resolveVersionAndChangelog(body.version, changelogLines);
+    const job = {
+      version: resolved.version,
+      changelogLines: resolved.changelogLines,
+      feedbackMessage,
+      scheduledFor: when.toISOString(),
+      createdAt: new Date().toISOString(),
+      createdBy: session.email || 'admin',
+      status: 'pending'
+    };
+    await setData(SCHEDULED_JOB_KEY, job);
+    return { statusCode: 200, headers, body: JSON.stringify({ success: true, scheduled: true, job }) };
   }
 
-  return {
-    statusCode: 200, headers,
-    body: JSON.stringify({ sent, total: signups.length, version, familiesAttached: families.length, errors })
-  };
+  // Immediate send path
+  try {
+    const result = await sendToAllTesters({ version: body.version, changelogLines, feedbackMessage });
+    return { statusCode: 200, headers, body: JSON.stringify(result) };
+  } catch (e) {
+    return { statusCode: 500, headers, body: JSON.stringify({ error: e.message }) };
+  }
 };
+
+exports.processScheduledJob = processScheduledJob;

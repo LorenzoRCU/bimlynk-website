@@ -7,3 +7,9 @@
 
 [functions."weekly-report"]
   schedule = "0 8 * * 1,4"
+
+[functions."demo-scheduler"]
+  schedule = "*/5 * * * *"
+
+[functions."beta-scheduler"]
+  schedule = "*/5 * * * *"
