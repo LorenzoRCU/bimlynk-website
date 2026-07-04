@@ -1,0 +1,6 @@
+{
+  "version": "1.2",
+  "releaseDate": "2026-07-04",
+  "downloadUrl": "https://www.bimlynk.com/fillrate-download.html",
+  "changelog": "Fill Rate Light NL v1.2 — compatibiliteitsfix voor Revit 2026: cable tray-selectie in de Fill Rate tool kon crashen doordat Revit 2026 een verouderde Revit API-methode heeft verwijderd. Selecteren en vulgraadgegevens ophalen werken nu weer correct op Revit 2024, 2025 en 2026."
+}
